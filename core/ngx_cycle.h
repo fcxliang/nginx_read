@@ -37,48 +37,48 @@ struct ngx_shm_zone_s {
 
 
 struct ngx_cycle_s {
-    void                  ****conf_ctx;  //Ä£¿éÅäÖÃÎÄ¼ş
-    ngx_pool_t               *pool;  //ÄÚ´æ·ÖÅä³Ø
+    void                  ****conf_ctx;  //æ¨¡å—é…ç½®æ–‡ä»¶
+    ngx_pool_t               *pool;  //å†…å­˜åˆ†é…æ± 
 
-    ngx_log_t                *log;  //Ö¸ÏòÈÕÖ¾½á¹¹
+    ngx_log_t                *log;  //æŒ‡å‘æ—¥å¿—ç»“æ„
     ngx_log_t                 new_log;
 
     ngx_uint_t                log_use_stderr;  /* unsigned  log_use_stderr:1; */
 
-    ngx_connection_t        **files; //´æ·ÅconnectionÖ¸ÕëµÄÊı×é£¬ÎÄ¼şÃèÊö·û×öÊı×éË÷Òı
-    ngx_connection_t         *free_connections;  //¿ÕÏĞconnectionÁ´±í
-    ngx_uint_t                free_connection_n; //¿ÕÏĞconnectionÊıÁ¿
+    ngx_connection_t        **files; //å­˜æ”¾connectionæŒ‡é’ˆçš„æ•°ç»„ï¼Œæ–‡ä»¶æè¿°ç¬¦åšæ•°ç»„ç´¢å¼•
+    ngx_connection_t         *free_connections;  //ç©ºé—²connectioné“¾è¡¨
+    ngx_uint_t                free_connection_n; //ç©ºé—²connectionæ•°é‡
 
-    ngx_module_t            **modules;  //ËùÓĞµÄÄ£¿é
+    ngx_module_t            **modules;  //æ‰€æœ‰çš„æ¨¡å—
     ngx_uint_t                modules_n;
     ngx_uint_t                modules_used;    /* unsigned  modules_used:1; */
 
     ngx_queue_t               reusable_connections_queue;
     ngx_uint_t                reusable_connections_n;
 
-    ngx_array_t               listening;  //listeningÊı×é
+    ngx_array_t               listening;  //listeningæ•°ç»„
     ngx_array_t               paths;
 
-    ngx_array_t               config_dump; //ÅäÖÃÎÄ¼şÔ´ÎÄÊı×é£¬Ã¿¸ö¶¼ÊÇngx_conf_dump_t£¬bufÊÇÔ´ÎÄ
+    ngx_array_t               config_dump; //é…ç½®æ–‡ä»¶æºæ–‡æ•°ç»„ï¼Œæ¯ä¸ªéƒ½æ˜¯ngx_conf_dump_tï¼Œbufæ˜¯æºæ–‡
     ngx_rbtree_t              config_dump_rbtree;
     ngx_rbtree_node_t         config_dump_sentinel;
 
     ngx_list_t                open_files;
     ngx_list_t                shared_memory;
 
-    ngx_uint_t                connection_n; //ÅäÖÃÎÄ¼şÀïÉèÖÃµÄ×î´óÁ¬½ÓÊıÁ¿
+    ngx_uint_t                connection_n; //é…ç½®æ–‡ä»¶é‡Œè®¾ç½®çš„æœ€å¤§è¿æ¥æ•°é‡
     ngx_uint_t                files_n;
 
-    ngx_connection_t         *connections;  //connections´æ´¢Êı×é
-    ngx_event_t              *read_events; //¶ÁÊÂ¼şÊı×é£¬ÈİÁ¿==×î´óÖ§³ÖÁ¬½ÓÊı
-    ngx_event_t              *write_events; //Ğ´ÊÂ¼şÊı×é£¬ÈİÁ¿==×î´óÖ§³ÖÁ¬½ÓÊı
+    ngx_connection_t         *connections;  //connectionså­˜å‚¨æ•°ç»„
+    ngx_event_t              *read_events; //è¯»äº‹ä»¶æ•°ç»„ï¼Œå®¹é‡==æœ€å¤§æ”¯æŒè¿æ¥æ•°
+    ngx_event_t              *write_events; //å†™äº‹ä»¶æ•°ç»„ï¼Œå®¹é‡==æœ€å¤§æ”¯æŒè¿æ¥æ•°
 
     ngx_cycle_t              *old_cycle;
 
     ngx_str_t                 conf_file;
     ngx_str_t                 conf_param;
-    ngx_str_t                 conf_prefix; //ÅäÖÃÎÄ¼şÂ·¾¶
-    ngx_str_t                 prefix;  //×ÜµÄÄ¬ÈÏÂ·¾¶
+    ngx_str_t                 conf_prefix; //é…ç½®æ–‡ä»¶è·¯å¾„
+    ngx_str_t                 prefix;  //æ€»çš„é»˜è®¤è·¯å¾„
     ngx_str_t                 lock_file;
     ngx_str_t                 hostname;
 };
@@ -86,12 +86,12 @@ struct ngx_cycle_s {
 
 typedef struct {
     ngx_flag_t                daemon;
-    ngx_flag_t                master;  //ÊÇ·ñÆô¶¯worker½ø³Ì
+    ngx_flag_t                master;  //æ˜¯å¦å¯åŠ¨workerè¿›ç¨‹
 
     ngx_msec_t                timer_resolution;
     ngx_msec_t                shutdown_timeout;
 
-    ngx_int_t                 worker_processes; //worker½ø³ÌÊıÁ¿
+    ngx_int_t                 worker_processes; //workerè¿›ç¨‹æ•°é‡
     ngx_int_t                 debug_points;
 
     ngx_int_t                 rlimit_nofile;
@@ -103,14 +103,14 @@ typedef struct {
     ngx_uint_t                cpu_affinity_n;
     ngx_cpuset_t             *cpu_affinity;
 
-    char                     *username;  //ÓÃ»§Ãû
-    ngx_uid_t                 user;  	 //ÓÃ»§ID
-    ngx_gid_t                 group;     //×éID	 
+    char                     *username;  //ç”¨æˆ·å
+    ngx_uid_t                 user;  	 //ç”¨æˆ·ID
+    ngx_gid_t                 group;     //ç»„ID	 
 
     ngx_str_t                 working_directory;
-    ngx_str_t                 lock_file; //lockÎÄ¼şÈ«Â·¾¶
+    ngx_str_t                 lock_file; //lockæ–‡ä»¶å…¨è·¯å¾„
 
-    ngx_str_t                 pid;   //pidÈ«Â·¾¶
+    ngx_str_t                 pid;   //pidå…¨è·¯å¾„
     ngx_str_t                 oldpid;
 
     ngx_array_t               env;

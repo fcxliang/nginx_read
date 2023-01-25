@@ -18,16 +18,16 @@ typedef struct ngx_listening_s  ngx_listening_t;
 struct ngx_listening_s {
     ngx_socket_t        fd;
 
-    struct sockaddr    *sockaddr;  //±¾¶Îsocket
+    struct sockaddr    *sockaddr;  //æœ¬æ®µsocket
     socklen_t           socklen;    /* size of sockaddr */
-    size_t              addr_text_max_len; // 1.1.1.1:80µÄ×Ö·û´®³¤¶È
-    ngx_str_t           addr_text;  //×Ö·û´®ĞÎÊ½µÄµØÖ·£¬ĞÎÈç£º1.1.1.1:80
+    size_t              addr_text_max_len; // 1.1.1.1:80çš„å­—ç¬¦ä¸²é•¿åº¦
+    ngx_str_t           addr_text;  //å­—ç¬¦ä¸²å½¢å¼çš„åœ°å€ï¼Œå½¢å¦‚ï¼š1.1.1.1:80
 
-    int                 type;  //socketÀàĞÍ£¬SOCK_STREAM£¬SOCK_DGRAMµÈ
+    int                 type;  //socketç±»å‹ï¼ŒSOCK_STREAMï¼ŒSOCK_DGRAMç­‰
 
     int                 backlog;
-    int                 rcvbuf;  //½ÓÊÕ»º³åÇø´óĞ¡
-    int                 sndbuf;  //·¢ËÍ»º³åÇø´óĞ¡
+    int                 rcvbuf;  //æ¥æ”¶ç¼“å†²åŒºå¤§å°
+    int                 sndbuf;  //å‘é€ç¼“å†²åŒºå¤§å°
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
     int                 keepidle;
     int                 keepintvl;
@@ -48,7 +48,7 @@ struct ngx_listening_s {
     /* should be here because of the deferred accept */
     ngx_msec_t          post_accept_timeout;
 
-    ngx_listening_t    *previous; //ÈÈÆô¶¯nginx½ø³ÌµÄÊ±ºò£¬ÔÚ×îĞÂÆô¶¯Ç°µÄÉÏÒ»¸önginxµÄËùÓĞlistenĞÅÏ¢
+    ngx_listening_t    *previous; //çƒ­å¯åŠ¨nginxè¿›ç¨‹çš„æ—¶å€™ï¼Œåœ¨æœ€æ–°å¯åŠ¨å‰çš„ä¸Šä¸€ä¸ªnginxçš„æ‰€æœ‰listenä¿¡æ¯
     ngx_connection_t   *connection;
 
     ngx_rbtree_t        rbtree;
@@ -61,7 +61,7 @@ struct ngx_listening_s {
     unsigned            ignore:1;
 
     unsigned            bound:1;       /* already bound */
-    unsigned            inherited:1;   /* inherited from previous process */ //±ê¼ÇÕâÊÇ¼Ì³ĞÀ´µÄsocket
+    unsigned            inherited:1;   /* inherited from previous process */ //æ ‡è®°è¿™æ˜¯ç»§æ‰¿æ¥çš„socket
     unsigned            nonblocking_accept:1;
     unsigned            listen:1;
     unsigned            nonblocking:1;
@@ -122,7 +122,7 @@ typedef enum {
 
 
 struct ngx_connection_s {
-    void               *data; //ÔÚeventÄ£¿éÀïÊÇÖ¸ÏòÏÂÒ»¸öconnection£¬¼´nextÖ¸Õë
+    void               *data; //åœ¨eventæ¨¡å—é‡Œæ˜¯æŒ‡å‘ä¸‹ä¸€ä¸ªconnectionï¼Œå³nextæŒ‡é’ˆ
     ngx_event_t        *read;
     ngx_event_t        *write;
 

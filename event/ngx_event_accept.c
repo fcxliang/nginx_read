@@ -318,7 +318,7 @@ ngx_event_accept(ngx_event_t *ev)
 ngx_int_t
 ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
 {
-    if (ngx_shmtx_trylock(&ngx_accept_mutex)) { //ÄÃËø
+    if (ngx_shmtx_trylock(&ngx_accept_mutex)) { //æ‹¿é”
 
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "accept mutex locked");
@@ -354,23 +354,23 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
 
 
 ngx_int_t
-ngx_enable_accept_events(ngx_cycle_t *cycle) //Ôö¼ÓÒ»¸öacceptÊÂ¼ş
+ngx_enable_accept_events(ngx_cycle_t *cycle) //å¢åŠ ä¸€ä¸ªacceptäº‹ä»¶
 {
     ngx_uint_t         i;
-    ngx_listening_t   *ls;  //¼àÌıÁ´±í
-    ngx_connection_t  *c;  //Á¬½ÓÁ´±í
+    ngx_listening_t   *ls;  //ç›‘å¬é“¾è¡¨
+    ngx_connection_t  *c;  //è¿æ¥é“¾è¡¨
 
     ls = cycle->listening.elts;
-    for (i = 0; i < cycle->listening.nelts; i++) {  //±éÀú¼àÌıÁ´±í
+    for (i = 0; i < cycle->listening.nelts; i++) {  //éå†ç›‘å¬é“¾è¡¨
 
-        c = ls[i].connection;  //È¡Á¬½Ó
+        c = ls[i].connection;  //å–è¿æ¥
 
-        if (c == NULL || c->read->active) {  //Ã»ÓĞÁ¬½Ó£¬»òÕß±¾À´¾Í´¦ÓÚµÈ´ı¶Á×´Ì¬£¬ºöÂÔ
+        if (c == NULL || c->read->active) {  //æ²¡æœ‰è¿æ¥ï¼Œæˆ–è€…æœ¬æ¥å°±å¤„äºç­‰å¾…è¯»çŠ¶æ€ï¼Œå¿½ç•¥
             continue;
         }
 
-		//connection²»Îª¿Õ²¢ÇÒ²¢²»ÔÚµÈ´ıread×´Ì¬£¬Ôö¼ÓÒ»¸öread
-        if (ngx_add_event(c->read, NGX_READ_EVENT, 0) == NGX_ERROR) { //epollµÄ»°µ÷ÓÃ ngx_epoll_add_event
+		//connectionä¸ä¸ºç©ºå¹¶ä¸”å¹¶ä¸åœ¨ç­‰å¾…readçŠ¶æ€ï¼Œå¢åŠ ä¸€ä¸ªread
+        if (ngx_add_event(c->read, NGX_READ_EVENT, 0) == NGX_ERROR) { //epollçš„è¯è°ƒç”¨ ngx_epoll_add_event
             return NGX_ERROR;
         }
     }

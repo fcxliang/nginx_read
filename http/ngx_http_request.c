@@ -426,7 +426,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         b->end = b->last + size;
     }
 
-    n = c->recv(c, b->last, size);  //接受数据
+    n = c->recv(c, b->last, size);  //鎺ュ彈鏁版嵁
 
     if (n == NGX_AGAIN) {
 
@@ -490,14 +490,14 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     ngx_reusable_connection(c, 0);
 
-    c->data = ngx_http_create_request(c);  // <<----------------------------创建http request
+    c->data = ngx_http_create_request(c);  // <<----------------------------鍒涘缓http request
     if (c->data == NULL) {
         ngx_http_close_connection(c);
         return;
     }
 
     rev->handler = ngx_http_process_request_line;
-    ngx_http_process_request_line(rev);  // <<-----------------------------------接收数据，解析请求行
+    ngx_http_process_request_line(rev);  // <<-----------------------------------鎺ユ敹鏁版嵁锛岃В鏋愯姹傝
 }
 
 

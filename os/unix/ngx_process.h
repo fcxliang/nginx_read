@@ -22,7 +22,7 @@ typedef void (*ngx_spawn_proc_pt) (ngx_cycle_t *cycle, void *data);
 typedef struct {
     ngx_pid_t           pid;
     int                 status;
-    ngx_socket_t        channel[2]; //Á½¸ö»¥ÁªµÄsocket    0¸¸½ø³Ì  1 ×Ó½ø³Ì
+    ngx_socket_t        channel[2]; //ä¸¤ä¸ªäº’è”çš„socket    0çˆ¶è¿›ç¨‹  1 å­è¿›ç¨‹
 
     ngx_spawn_proc_pt   proc;
     void               *data;
@@ -44,7 +44,7 @@ typedef struct {
 } ngx_exec_ctx_t;
 
 
-#define NGX_MAX_PROCESSES         1024 //×î´ó½ø³ÌÊıÁ¿
+#define NGX_MAX_PROCESSES         1024 //æœ€å¤§è¿›ç¨‹æ•°é‡
 
 #define NGX_PROCESS_NORESPAWN     -1
 #define NGX_PROCESS_JUST_SPAWN    -2

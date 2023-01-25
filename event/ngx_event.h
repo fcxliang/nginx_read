@@ -28,11 +28,11 @@ typedef struct {
 
 
 struct ngx_event_s {
-    void            *data;  //Èç¹ûcoreµÄÖ¸Ïòconnection£¬Èç¹ûÊÇenvent
+    void            *data;  //å¦‚æœcoreçš„æŒ‡å‘connectionï¼Œå¦‚æœæ˜¯envent
 
     unsigned         write:1;
 
-    unsigned         accept:1;  //µÈ´ıacceptÇëÇó
+    unsigned         accept:1;  //ç­‰å¾…acceptè¯·æ±‚
 
     /* used to detect the stale events in kqueue and epoll */
     unsigned         instance:1;
@@ -350,7 +350,7 @@ extern ngx_uint_t            ngx_use_epoll_rdhup;
 
 #elif (NGX_HAVE_EPOLL) && !(NGX_TEST_BUILD_EPOLL)
 
-#define NGX_READ_EVENT     (EPOLLIN|EPOLLRDHUP) //ÓĞÊı¾İµ½´ï»ò¶Ô¶Ë·¢ËÍFIN»ò±¾¶Ë¹Ø±Õ¶Á
+#define NGX_READ_EVENT     (EPOLLIN|EPOLLRDHUP) //æœ‰æ•°æ®åˆ°è¾¾æˆ–å¯¹ç«¯å‘é€FINæˆ–æœ¬ç«¯å…³é—­è¯»
 #define NGX_WRITE_EVENT    EPOLLOUT
 
 #define NGX_LEVEL_EVENT    0
@@ -432,10 +432,10 @@ extern ngx_os_io_t  ngx_io;
 
 typedef struct {
     ngx_uint_t    connections;
-    ngx_uint_t    use;  //use Ö¸Áî: select/poll/kqueue(bsd)/epoll/eventport(solaris)
+    ngx_uint_t    use;  //use æŒ‡ä»¤: select/poll/kqueue(bsd)/epoll/eventport(solaris)
 
     ngx_flag_t    multi_accept;
-    ngx_flag_t    accept_mutex; //±¾À´ÊÇÒª½â¾ö¾ªÈºÎÊÌâµÄ,ÏÖÔÚÄÚºË4.5ÒÔÉÏÖ§³ÖEPOLLEXCLUSIVE,epoll¾ªÈº½â¾öÁË
+    ngx_flag_t    accept_mutex; //æœ¬æ¥æ˜¯è¦è§£å†³æƒŠç¾¤é—®é¢˜çš„,ç°åœ¨å†…æ ¸4.5ä»¥ä¸Šæ”¯æŒEPOLLEXCLUSIVE,epollæƒŠç¾¤è§£å†³äº†
 
     ngx_msec_t    accept_mutex_delay;
 

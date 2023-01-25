@@ -28,9 +28,9 @@ static void ngx_cache_manager_process_handler(ngx_event_t *ev);
 static void ngx_cache_loader_process_handler(ngx_event_t *ev);
 
 
-ngx_uint_t    ngx_process;  //worker½ø³Ì master½ø³Ì singleµÄ
-ngx_uint_t    ngx_worker; //worker½ø³ÌĞòºÅ
-ngx_pid_t     ngx_pid;  //µ±Ç°½ø³ÌPID
+ngx_uint_t    ngx_process;  //workerè¿›ç¨‹ masterè¿›ç¨‹ singleçš„
+ngx_uint_t    ngx_worker; //workerè¿›ç¨‹åºå·
+ngx_pid_t     ngx_pid;  //å½“å‰è¿›ç¨‹PID
 ngx_pid_t     ngx_parent;
 
 sig_atomic_t  ngx_reap;
@@ -96,22 +96,22 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     sigaddset(&set, ngx_signal_value(NGX_SHUTDOWN_SIGNAL));  	//SIGQUIT
     sigaddset(&set, ngx_signal_value(NGX_CHANGEBIN_SIGNAL));  	//SIGUSER2
 
-    if (sigprocmask(SIG_BLOCK, &set, NULL) == -1) { //×èÈûÉÏÊöĞÅºÅ
+    if (sigprocmask(SIG_BLOCK, &set, NULL) == -1) { //é˜»å¡ä¸Šè¿°ä¿¡å·
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "sigprocmask() failed");
     }
 
-    sigemptyset(&set); //Çå¿Õset
+    sigemptyset(&set); //æ¸…ç©ºset
 
 
     size = sizeof(master_process);
 
-	//¼ÆËãËùÓĞ²ÎÊıµÄ×Ü³¤¶È
+	//è®¡ç®—æ‰€æœ‰å‚æ•°çš„æ€»é•¿åº¦
     for (i = 0; i < ngx_argc; i++) {
         size += ngx_strlen(ngx_argv[i]) + 1;
     }
 
-    title = ngx_pnalloc(cycle->pool, size); //ÉêÇëÒÔÉÏÈİÁ¿µÄ´æ´¢
+    title = ngx_pnalloc(cycle->pool, size); //ç”³è¯·ä»¥ä¸Šå®¹é‡çš„å­˜å‚¨
     if (title == NULL) {
         /* fatal */
         exit(2);
@@ -120,13 +120,13 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     p = ngx_cpymem(title, master_process, sizeof(master_process) - 1);
     for (i = 0; i < ngx_argc; i++) {
         *p++ = ' ';
-        p = ngx_cpystrn(p, (u_char *) ngx_argv[i], size);  //×·¼ÓÉÏ²ÎÊı
+        p = ngx_cpystrn(p, (u_char *) ngx_argv[i], size);  //è¿½åŠ ä¸Šå‚æ•°
     }
 
-    ngx_setproctitle(title); //ÉèÖÃ½ø³Ìtitle
+    ngx_setproctitle(title); //è®¾ç½®è¿›ç¨‹title
 
 
-    ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module); //È¡µÃcoreÄ£¿éµÄÅäÖÃ
+    ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module); //å–å¾—coreæ¨¡å—çš„é…ç½®
 
     ngx_start_worker_processes(cycle, ccf->worker_processes,
                                NGX_PROCESS_RESPAWN);
@@ -345,13 +345,13 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
 
     ch.command = NGX_CMD_OPEN_CHANNEL;
 
-    for (i = 0; i < n; i++) { //Éú³Én¸öworker½ø³Ì
+    for (i = 0; i < n; i++) { //ç”Ÿæˆnä¸ªworkerè¿›ç¨‹
 
         ngx_spawn_process(cycle, ngx_worker_process_cycle,
                           (void *) (intptr_t) i, "worker process", type);
 
-        ch.pid = ngx_processes[ngx_process_slot].pid; // worker½ø³Ìpid
-        ch.slot = ngx_process_slot; //worker½ø³ÌÔÚ½ø³ÌÊı×éÖĞµÄÎ»ÖÃ
+        ch.pid = ngx_processes[ngx_process_slot].pid; // workerè¿›ç¨‹pid
+        ch.slot = ngx_process_slot; //workerè¿›ç¨‹åœ¨è¿›ç¨‹æ•°ç»„ä¸­çš„ä½ç½®
         ch.fd = ngx_processes[ngx_process_slot].channel[0]; //channel 0
 
         ngx_pass_open_channel(cycle, &ch);
@@ -716,18 +716,18 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
 
 
 static void
-ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data) // worker½ø³Ì
+ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data) // workerè¿›ç¨‹
 {
-    ngx_int_t worker = (intptr_t) data; //worker½ø³ÌĞòºÅ
+    ngx_int_t worker = (intptr_t) data; //workerè¿›ç¨‹åºå·
 
     ngx_process = NGX_PROCESS_WORKER;
-    ngx_worker = worker;  //½ø³ÌĞòºÅ
+    ngx_worker = worker;  //è¿›ç¨‹åºå·
 
-    ngx_worker_process_init(cycle, worker); //ÉèÖÃ¼àÌı£¬ÉèÖÃacceptµÄhandle£¬epoll_ctl
+    ngx_worker_process_init(cycle, worker); //è®¾ç½®ç›‘å¬ï¼Œè®¾ç½®acceptçš„handleï¼Œepoll_ctl
 
     ngx_setproctitle("worker process");
 
-    for ( ;; ) { //ÕâÀïÃæÓ¦¸ÃepollwaitÁË
+    for ( ;; ) { //è¿™é‡Œé¢åº”è¯¥epollwaitäº†
 
         if (ngx_exiting) {
             if (ngx_event_no_timers_left() == NGX_OK) {
@@ -738,7 +738,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data) // worker½ø³Ì
 
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker cycle");
 
-        ngx_process_events_and_timers(cycle); //epoll waitÔÚÕâÀï
+        ngx_process_events_and_timers(cycle); //epoll waitåœ¨è¿™é‡Œ
 
         if (ngx_terminate) {
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "exiting");
@@ -780,7 +780,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     ngx_core_conf_t  *ccf;
     ngx_listening_t  *ls;
 
-    if (ngx_set_environment(cycle, NULL) == NULL) { //»·¾³±äÁ¿
+    if (ngx_set_environment(cycle, NULL) == NULL) { //ç¯å¢ƒå˜é‡
         /* fatal */
         exit(2);
     }
@@ -788,7 +788,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
     if (worker >= 0 && ccf->priority != 0) {
-        if (setpriority(PRIO_PROCESS, 0, ccf->priority) == -1) {  //°´ÕÕÅäÖÃÉèÖÃµ±Ç°½ø³ÌµÄÓÅÏÈ¼¶
+        if (setpriority(PRIO_PROCESS, 0, ccf->priority) == -1) {  //æŒ‰ç…§é…ç½®è®¾ç½®å½“å‰è¿›ç¨‹çš„ä¼˜å…ˆçº§
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setpriority(%d) failed", ccf->priority);
         }
@@ -798,7 +798,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         rlmt.rlim_cur = (rlim_t) ccf->rlimit_nofile;
         rlmt.rlim_max = (rlim_t) ccf->rlimit_nofile;
 
-        if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) {  //ÉèÖÃ×î´óÃèÊö·û
+        if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) {  //è®¾ç½®æœ€å¤§æè¿°ç¬¦
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setrlimit(RLIMIT_NOFILE, %i) failed",
                           ccf->rlimit_nofile);
@@ -809,22 +809,22 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         rlmt.rlim_cur = (rlim_t) ccf->rlimit_core;
         rlmt.rlim_max = (rlim_t) ccf->rlimit_core;
 
-        if (setrlimit(RLIMIT_CORE, &rlmt) == -1) { //ÉèÖÃcore dumpÎÄ¼şµÄ×î´ósize
+        if (setrlimit(RLIMIT_CORE, &rlmt) == -1) { //è®¾ç½®core dumpæ–‡ä»¶çš„æœ€å¤§size
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setrlimit(RLIMIT_CORE, %O) failed",
                           ccf->rlimit_core);
         }
     }
 
-    if (geteuid() == 0) { //ÓĞĞ§ÓÃ»§idÎª0
-        if (setgid(ccf->group) == -1) {  //ÉèÖÃ×éid
+    if (geteuid() == 0) { //æœ‰æ•ˆç”¨æˆ·idä¸º0
+        if (setgid(ccf->group) == -1) {  //è®¾ç½®ç»„id
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "setgid(%d) failed", ccf->group);
             /* fatal */
             exit(2);
         }
 
-        if (initgroups(ccf->username, ccf->group) == -1) { //°ÑÓÃ»§¼ÓÈë×é(*¦µÃó¦µ*)
+        if (initgroups(ccf->username, ccf->group) == -1) { //æŠŠç”¨æˆ·åŠ å…¥ç»„(*Î¦çš¿Î¦*)
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "initgroups(%s, %d) failed",
                           ccf->username, ccf->group);
@@ -841,7 +841,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         }
 #endif
 
-        if (setuid(ccf->user) == -1) { //ÉèÖÃuid
+        if (setuid(ccf->user) == -1) { //è®¾ç½®uid
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "setuid(%d) failed", ccf->user);
             /* fatal */
@@ -871,7 +871,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     }
 
     if (worker >= 0) {
-        cpu_affinity = ngx_get_cpu_affinity(worker);  //ÉèÖÃCPUÇ×ºÍĞÔ 0010 1000ÕâĞ©
+        cpu_affinity = ngx_get_cpu_affinity(worker);  //è®¾ç½®CPUäº²å’Œæ€§ 0010 1000è¿™äº›
 
         if (cpu_affinity) {
             ngx_setaffinity(cpu_affinity, cycle->log);
@@ -900,7 +900,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 
     sigemptyset(&set);
 
-    if (sigprocmask(SIG_SETMASK, &set, NULL) == -1) { //È¥µôĞÅºÅÆÁ±Î
+    if (sigprocmask(SIG_SETMASK, &set, NULL) == -1) { //å»æ‰ä¿¡å·å±è”½
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "sigprocmask() failed");
     }
@@ -913,7 +913,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
      * in the worker processes there are no events at all at this point
      */
     /*
-    	½ûÖ¹É¾³ı¼àÌıÌ×½Ó×ÖÒÔÇ°µÄevent, ÒòÎªÔÚworker½ø³ÌÖĞ£¬´ËÊ±²¢Ã»ÓĞevent
+    	ç¦æ­¢åˆ é™¤ç›‘å¬å¥—æ¥å­—ä»¥å‰çš„event, å› ä¸ºåœ¨workerè¿›ç¨‹ä¸­ï¼Œæ­¤æ—¶å¹¶æ²¡æœ‰event
     */
     ls = cycle->listening.elts;
     for (i = 0; i < cycle->listening.nelts; i++) {
@@ -929,7 +929,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         }
     }
 
-    for (n = 0; n < ngx_last_process; n++) { //¹Ø±Õ¸´ÖÆÀ´µÄÆäËûworker½ø³ÌµÄchannel[1]  
+    for (n = 0; n < ngx_last_process; n++) { //å…³é—­å¤åˆ¶æ¥çš„å…¶ä»–workerè¿›ç¨‹çš„channel[1]  
 
         if (ngx_processes[n].pid == -1) {
             continue;
@@ -949,7 +949,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         }
     }
 
-    if (close(ngx_processes[ngx_process_slot].channel[0]) == -1) { //worker½ø³Ì¹Ø±Õchannel 0£¬0ÔÚ¸¸½ø³ÌÄÇÀï£¬worker±£Áô1£¬Óë¸¸½ø³ÌÍ¨ĞÅ
+    if (close(ngx_processes[ngx_process_slot].channel[0]) == -1) { //workerè¿›ç¨‹å…³é—­channel 0ï¼Œ0åœ¨çˆ¶è¿›ç¨‹é‚£é‡Œï¼Œworkerä¿ç•™1ï¼Œä¸çˆ¶è¿›ç¨‹é€šä¿¡
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "close() channel failed");
     }
@@ -958,7 +958,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     ngx_last_process = 0;
 #endif
 
-    if (ngx_add_channel_event(cycle, ngx_channel, NGX_READ_EVENT,  //×¢²áchannel 1ÊÂ¼ş£¬¼°»Øµ÷¡£ÏìÓ¦ÊÂ¼şÎªEPOLLIN|EPOLLRDHUP
+    if (ngx_add_channel_event(cycle, ngx_channel, NGX_READ_EVENT,  //æ³¨å†Œchannel 1äº‹ä»¶ï¼ŒåŠå›è°ƒã€‚å“åº”äº‹ä»¶ä¸ºEPOLLIN|EPOLLRDHUP
                               ngx_channel_handler)
         == NGX_ERROR)
     {
@@ -1030,7 +1030,7 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
 
 
 static void
-ngx_channel_handler(ngx_event_t *ev) //worker½ø³Ìread»Øµ÷
+ngx_channel_handler(ngx_event_t *ev) //workerè¿›ç¨‹readå›è°ƒ
 {
     ngx_int_t          n;
     ngx_channel_t      ch;

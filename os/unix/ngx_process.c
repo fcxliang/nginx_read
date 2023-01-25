@@ -27,13 +27,13 @@ static void ngx_unlock_mutexes(ngx_pid_t pid);
 
 
 int              ngx_argc;
-char           **ngx_argv; //ngx_argvÊı×é£¬Ã¿¸öÔªËØÖ¸ÏòÒ»¸ö´æ·Å¾ßÌåargµÄ¿Õ¼ä
+char           **ngx_argv; //ngx_argvæ•°ç»„ï¼Œæ¯ä¸ªå…ƒç´ æŒ‡å‘ä¸€ä¸ªå­˜æ”¾å…·ä½“argçš„ç©ºé—´
 char           **ngx_os_argv;
 
 ngx_int_t        ngx_process_slot;
 ngx_socket_t     ngx_channel;  //channel 1
 ngx_int_t        ngx_last_process;
-ngx_process_t    ngx_processes[NGX_MAX_PROCESSES]; //work½ø³ÌÊı×é
+ngx_process_t    ngx_processes[NGX_MAX_PROCESSES]; //workè¿›ç¨‹æ•°ç»„
 
 
 ngx_signal_t  signals[] = {
@@ -84,9 +84,9 @@ ngx_signal_t  signals[] = {
 
 
 /*
-´Óngx_master_process_cycleµ÷¹ıÀ´µÄ³¡¾°ÏÂ£¬²ÎÊıÈçÏÂ¸³Öµ£º
-	proc£¬ »Øµ÷º¯Êı£¬ ngx_worker_process_cycle
-	data,  Æô¶¯½ø³ÌµÄË³ĞòºÅ£¬×ª³ÉÖ¸ÕëÀàĞÍ
+ä»ngx_master_process_cycleè°ƒè¿‡æ¥çš„åœºæ™¯ä¸‹ï¼Œå‚æ•°å¦‚ä¸‹èµ‹å€¼ï¼š
+	procï¼Œ å›è°ƒå‡½æ•°ï¼Œ ngx_worker_process_cycle
+	data,  å¯åŠ¨è¿›ç¨‹çš„é¡ºåºå·ï¼Œè½¬æˆæŒ‡é’ˆç±»å‹
 	name,  "worker process"
 	respawn, NGX_PROCESS_RESPAWN
 */
@@ -102,7 +102,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         s = respawn;
 
     } else {
-        for (s = 0; s < ngx_last_process; s++) { //²éÕÒngx_processÀïÃæµÄ¿ÕÎ»
+        for (s = 0; s < ngx_last_process; s++) { //æŸ¥æ‰¾ngx_processé‡Œé¢çš„ç©ºä½
             if (ngx_processes[s].pid == -1) {
                 break;
             }
@@ -121,7 +121,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
 
         /* Solaris 9 still has no AF_LOCAL */
 
-        if (socketpair(AF_UNIX, SOCK_STREAM, 0, ngx_processes[s].channel) == -1) //´´½¨»¥Í¨µÄsocket channel[0]ºÍ[1]
+        if (socketpair(AF_UNIX, SOCK_STREAM, 0, ngx_processes[s].channel) == -1) //åˆ›å»ºäº’é€šçš„socket channel[0]å’Œ[1]
         {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "socketpair() failed while spawning \"%s\"", name);
@@ -133,7 +133,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
                        ngx_processes[s].channel[0],
                        ngx_processes[s].channel[1]);
 
-        if (ngx_nonblocking(ngx_processes[s].channel[0]) == -1) {  //°Ñchannel0ÉèÖÃÎª·Ç×èÈû
+        if (ngx_nonblocking(ngx_processes[s].channel[0]) == -1) {  //æŠŠchannel0è®¾ç½®ä¸ºéé˜»å¡
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           ngx_nonblocking_n " failed while spawning \"%s\"",
                           name);
@@ -141,7 +141,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
             return NGX_INVALID_PID;
         }
 
-        if (ngx_nonblocking(ngx_processes[s].channel[1]) == -1) { //°Ñchannel1ÉèÖÃ³É·Ç×èÈû
+        if (ngx_nonblocking(ngx_processes[s].channel[1]) == -1) { //æŠŠchannel1è®¾ç½®æˆéé˜»å¡
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           ngx_nonblocking_n " failed while spawning \"%s\"",
                           name);
@@ -150,22 +150,22 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         }
 
         on = 1;
-        if (ioctl(ngx_processes[s].channel[0], FIOASYNC, &on) == -1) { //ÈÃÄÚºËÔÚµ±Ì×½Ó×Ö×¼±¸ºÃIOÊ±·¢ËÍSIGIO»òÕßSIGPOLL¸ø½ø³Ì
+        if (ioctl(ngx_processes[s].channel[0], FIOASYNC, &on) == -1) { //è®©å†…æ ¸åœ¨å½“å¥—æ¥å­—å‡†å¤‡å¥½IOæ—¶å‘é€SIGIOæˆ–è€…SIGPOLLç»™è¿›ç¨‹
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "ioctl(FIOASYNC) failed while spawning \"%s\"", name);
             ngx_close_channel(ngx_processes[s].channel, cycle->log);
             return NGX_INVALID_PID;
         }
 
-        if (fcntl(ngx_processes[s].channel[0], F_SETOWN, ngx_pid) == -1) { //ÉèÖÃÔÚngx_pidÕâ¸ö½ø³ÌÉÏ½ÓÊÕSIGIOĞÅºÅ£¬Ò²¾ÍÊÇÖ÷½ø³Ì
+        if (fcntl(ngx_processes[s].channel[0], F_SETOWN, ngx_pid) == -1) { //è®¾ç½®åœ¨ngx_pidè¿™ä¸ªè¿›ç¨‹ä¸Šæ¥æ”¶SIGIOä¿¡å·ï¼Œä¹Ÿå°±æ˜¯ä¸»è¿›ç¨‹
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "fcntl(F_SETOWN) failed while spawning \"%s\"", name);
             ngx_close_channel(ngx_processes[s].channel, cycle->log);
             return NGX_INVALID_PID;
         }
 
-		//close on exec, not on-fork£¬ ËùÒÔforkÊ±²¢²»»á¹Ø±Õ
-        if (fcntl(ngx_processes[s].channel[0], F_SETFD, FD_CLOEXEC) == -1) { //ÉèÖÃÎÄ¼şÃèÊö·û±ê¼Ç£¬Ö´ĞĞexecveµÄÊ±ºò£¬¹Ø±Õchannel 0 
+		//close on exec, not on-forkï¼Œ æ‰€ä»¥forkæ—¶å¹¶ä¸ä¼šå…³é—­
+        if (fcntl(ngx_processes[s].channel[0], F_SETFD, FD_CLOEXEC) == -1) { //è®¾ç½®æ–‡ä»¶æè¿°ç¬¦æ ‡è®°ï¼Œæ‰§è¡Œexecveçš„æ—¶å€™ï¼Œå…³é—­channel 0 
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "fcntl(FD_CLOEXEC) failed while spawning \"%s\"",
                            name);
@@ -173,7 +173,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
             return NGX_INVALID_PID;
         }
 
-        if (fcntl(ngx_processes[s].channel[1], F_SETFD, FD_CLOEXEC) == -1) { //Ö´ĞĞexecveµÄÊ±ºò£¬¹Ø±Õchannel 1
+        if (fcntl(ngx_processes[s].channel[1], F_SETFD, FD_CLOEXEC) == -1) { //æ‰§è¡Œexecveçš„æ—¶å€™ï¼Œå…³é—­channel 1
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "fcntl(FD_CLOEXEC) failed while spawning \"%s\"",
                            name);
@@ -191,7 +191,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     ngx_process_slot = s;
 
 
-    pid = fork();  //<<------------------------------------´´½¨worker½ø³Ì
+    pid = fork();  //<<------------------------------------åˆ›å»ºworkerè¿›ç¨‹
 
     switch (pid) {
 
@@ -201,10 +201,10 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         ngx_close_channel(ngx_processes[s].channel, cycle->log);
         return NGX_INVALID_PID;
 
-    case 0:  //½øÈëworker½ø³Ì
-        ngx_parent = ngx_pid;   //ÉÏÃæµÄ½ø³Ì³ÉÎª¸¸½ø³Ì
-        ngx_pid = ngx_getpid(); //È¡µ±Ç°worker½ø³Ìid
-        proc(cycle, data);   //Ö´ĞĞproc»Øµ÷  ngx_worker_process_cycle  data½ø³ÌË³ĞòºÅ
+    case 0:  //è¿›å…¥workerè¿›ç¨‹
+        ngx_parent = ngx_pid;   //ä¸Šé¢çš„è¿›ç¨‹æˆä¸ºçˆ¶è¿›ç¨‹
+        ngx_pid = ngx_getpid(); //å–å½“å‰workerè¿›ç¨‹id
+        proc(cycle, data);   //æ‰§è¡Œprocå›è°ƒ  ngx_worker_process_cycle  dataè¿›ç¨‹é¡ºåºå·
         break;
 
     default:
@@ -216,7 +216,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     ngx_processes[s].pid = pid;
     ngx_processes[s].exited = 0;
 
-    if (respawn >= 0) { //Èç¹ûÊ±respawn·µ»Øwork¶ø½ø³Ìpid
+    if (respawn >= 0) { //å¦‚æœæ—¶respawnè¿”å›workè€Œè¿›ç¨‹pid
         return pid;
     }
 
@@ -289,7 +289,7 @@ ngx_execute_proc(ngx_cycle_t *cycle, void *data)
 }
 
 /*
-	¸ù¾İsignals±í³õÊ¼»¯¸÷¸öĞÅºÅµÄhandle
+	æ ¹æ®signalsè¡¨åˆå§‹åŒ–å„ä¸ªä¿¡å·çš„handle
 */
 ngx_int_t
 ngx_init_signals(ngx_log_t *log)
@@ -308,8 +308,8 @@ ngx_init_signals(ngx_log_t *log)
             sa.sa_handler = SIG_IGN;
         }
 
-        sigemptyset(&sa.sa_mask); //È¥µôËùÓĞÆÁ±Î
-        if (sigaction(sig->signo, &sa, NULL) == -1) { //×¢²áËùÓĞĞÅºÅ´¦Àíº¯Êı
+        sigemptyset(&sa.sa_mask); //å»æ‰æ‰€æœ‰å±è”½
+        if (sigaction(sig->signo, &sa, NULL) == -1) { //æ³¨å†Œæ‰€æœ‰ä¿¡å·å¤„ç†å‡½æ•°
 #if (NGX_VALGRIND)
             ngx_log_error(NGX_LOG_ALERT, log, ngx_errno,
                           "sigaction(%s) failed, ignored", sig->signame);

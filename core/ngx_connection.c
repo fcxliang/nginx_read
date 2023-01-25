@@ -131,11 +131,11 @@ ngx_clone_listening(ngx_cycle_t *cycle, ngx_listening_t *ls)
 }
 
 /*
-	cycle->listening.elts[x].fd¼ÇÂ¼ÁË¾ÉÓÐµÄsocket fd
-	ÏÖÔÚÍ¨¹ý»ñÈ¡Ã¿¸öfdµÄsocketÊôÐÔ£¬ÖØÐÂÌî³äcycle->listening.elts[x]µÄÆäËû×Ö¶Î
+	cycle->listening.elts[x].fdè®°å½•äº†æ—§æœ‰çš„socket fd
+	çŽ°åœ¨é€šè¿‡èŽ·å–æ¯ä¸ªfdçš„socketå±žæ€§ï¼Œé‡æ–°å¡«å……cycle->listening.elts[x]çš„å…¶ä»–å­—æ®µ
 */
 ngx_int_t
-ngx_set_inherited_sockets(ngx_cycle_t *cycle) //´Ó¼Ì³ÐµÄsocketÉÏ°ÑÏà¹ØÐÅÏ¢È¡ÏÂÀ´
+ngx_set_inherited_sockets(ngx_cycle_t *cycle) //ä»Žç»§æ‰¿çš„socketä¸ŠæŠŠç›¸å…³ä¿¡æ¯å–ä¸‹æ¥
 {
     size_t                     len;
     ngx_uint_t                 i;
@@ -157,13 +157,13 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle) //´Ó¼Ì³ÐµÄsocketÉÏ°ÑÏà¹ØÐÅÏ¢È¡ÏÂÀ´
     ls = cycle->listening.elts;
     for (i = 0; i < cycle->listening.nelts; i++) {
 
-        ls[i].sockaddr = ngx_palloc(cycle->pool, sizeof(ngx_sockaddr_t)); //·ÖÅä´æ·ÅµØÖ·µÄ¿Õ¼ä
+        ls[i].sockaddr = ngx_palloc(cycle->pool, sizeof(ngx_sockaddr_t)); //åˆ†é…å­˜æ”¾åœ°å€çš„ç©ºé—´
         if (ls[i].sockaddr == NULL) {
             return NGX_ERROR;
         }
 
         ls[i].socklen = sizeof(ngx_sockaddr_t);
-        if (getsockname(ls[i].fd, ls[i].sockaddr, &ls[i].socklen) == -1) { //»ñµÃ±¾¶ËsocketÐÅÏ¢sockaddr
+        if (getsockname(ls[i].fd, ls[i].sockaddr, &ls[i].socklen) == -1) { //èŽ·å¾—æœ¬ç«¯socketä¿¡æ¯sockaddr
             ngx_log_error(NGX_LOG_CRIT, cycle->log, ngx_socket_errno,
                           "getsockname() of the inherited "
                           "socket #%d failed", ls[i].fd);
@@ -204,24 +204,24 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle) //´Ó¼Ì³ÐµÄsocketÉÏ°ÑÏà¹ØÐÅÏ¢È¡ÏÂÀ´
             continue;
         }
 
-        ls[i].addr_text.data = ngx_pnalloc(cycle->pool, len); //ÎªIP:¶Ë¿ÚÕâÑùµÄÎÄ×ÖÃèÊö·ÖÅä¿Õ¼ä
+        ls[i].addr_text.data = ngx_pnalloc(cycle->pool, len); //ä¸ºIP:ç«¯å£è¿™æ ·çš„æ–‡å­—æè¿°åˆ†é…ç©ºé—´
         if (ls[i].addr_text.data == NULL) {
             return NGX_ERROR;
         }
 
         len = ngx_sock_ntop(ls[i].sockaddr, ls[i].socklen,
-                            ls[i].addr_text.data, len, 1);  //µØÖ·×Ö·û´®Ð´½ødata£¬·µ»ØÊµ¼ÊµÄ×Ö·û´®³¤¶È
+                            ls[i].addr_text.data, len, 1);  //åœ°å€å­—ç¬¦ä¸²å†™è¿›dataï¼Œè¿”å›žå®žé™…çš„å­—ç¬¦ä¸²é•¿åº¦
         if (len == 0) {
             return NGX_ERROR;
         }
 
-        ls[i].addr_text.len = len; //×Ö·û´®µØÖ·³¤¶È
+        ls[i].addr_text.len = len; //å­—ç¬¦ä¸²åœ°å€é•¿åº¦
 
         ls[i].backlog = NGX_LISTEN_BACKLOG;
 
         olen = sizeof(int);
 
-        if (getsockopt(ls[i].fd, SOL_SOCKET, SO_TYPE, (void *) &ls[i].type, //»ñµÃsocketÀàÐÍ£¬ÀýÈç£ºSOCK_STREAM£¬SOCK_DGRAM
+        if (getsockopt(ls[i].fd, SOL_SOCKET, SO_TYPE, (void *) &ls[i].type, //èŽ·å¾—socketç±»åž‹ï¼Œä¾‹å¦‚ï¼šSOCK_STREAMï¼ŒSOCK_DGRAM
                        &olen)
             == -1)
         {
@@ -233,7 +233,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle) //´Ó¼Ì³ÐµÄsocketÉÏ°ÑÏà¹ØÐÅÏ¢È¡ÏÂÀ´
 
         olen = sizeof(int);
 
-        if (getsockopt(ls[i].fd, SOL_SOCKET, SO_RCVBUF, (void *) &ls[i].rcvbuf, //»ñµÃÔ­Ê¼»º½ÓÊÕ³åÇøµÄ´óÐ¡
+        if (getsockopt(ls[i].fd, SOL_SOCKET, SO_RCVBUF, (void *) &ls[i].rcvbuf, //èŽ·å¾—åŽŸå§‹ç¼“æŽ¥æ”¶å†²åŒºçš„å¤§å°
                        &olen)
             == -1)
         {
@@ -246,7 +246,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle) //´Ó¼Ì³ÐµÄsocketÉÏ°ÑÏà¹ØÐÅÏ¢È¡ÏÂÀ´
 
         olen = sizeof(int);
 
-        if (getsockopt(ls[i].fd, SOL_SOCKET, SO_SNDBUF, (void *) &ls[i].sndbuf, //»ñµÃÔ­Ê¼·¢ËÍ»º³åÇøµÄ´óÐ¡
+        if (getsockopt(ls[i].fd, SOL_SOCKET, SO_SNDBUF, (void *) &ls[i].sndbuf, //èŽ·å¾—åŽŸå§‹å‘é€ç¼“å†²åŒºçš„å¤§å°
                        &olen)
             == -1)
         {
@@ -278,12 +278,12 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle) //´Ó¼Ì³ÐµÄsocketÉÏ°ÑÏà¹ØÐÅÏ¢È¡ÏÂÀ´
 #endif
 #endif
 
-#if (NGX_HAVE_REUSEPORT)  //¶à¸ö½ø³Ì°ó¶¨Í¬Ò»¸ö¶Ë¿Ú
+#if (NGX_HAVE_REUSEPORT)  //å¤šä¸ªè¿›ç¨‹ç»‘å®šåŒä¸€ä¸ªç«¯å£
 
         reuseport = 0;
         olen = sizeof(int);
 
-#ifdef SO_REUSEPORT_LB //Ö§³Ö¸ºÔØ¾ùºâ
+#ifdef SO_REUSEPORT_LB //æ”¯æŒè´Ÿè½½å‡è¡¡
 
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_REUSEPORT_LB,
                        (void *) &reuseport, &olen)
@@ -374,7 +374,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle) //´Ó¼Ì³ÐµÄsocketÉÏ°ÑÏà¹ØÐÅÏ¢È¡ÏÂÀ´
                            (u_char *) af.af_name, 16);
 #endif
 
-#if (NGX_HAVE_DEFERRED_ACCEPT && defined TCP_DEFER_ACCEPT) //Ö§³ÖÊ¡ÂÔ¿Í»§¶Ëack£¬¼´acceptÔÚÊÕµ½µÚÒ»¸öÊý¾Ý°üÊ±·µ»Ø
+#if (NGX_HAVE_DEFERRED_ACCEPT && defined TCP_DEFER_ACCEPT) //æ”¯æŒçœç•¥å®¢æˆ·ç«¯ackï¼Œå³acceptåœ¨æ”¶åˆ°ç¬¬ä¸€ä¸ªæ•°æ®åŒ…æ—¶è¿”å›ž
 
         timeout = 0;
         olen = sizeof(int);
@@ -439,7 +439,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 
 #if (NGX_HAVE_REUSEPORT)
 
-            if (ls[i].add_reuseport) {  //ÐÂÆô¶¯µÄ²»»áÓÐÕâ¸ö£¬·ñ
+            if (ls[i].add_reuseport) {  //æ–°å¯åŠ¨çš„ä¸ä¼šæœ‰è¿™ä¸ªï¼Œå¦
 
                 /*
                  * to allow transition from a socket without SO_REUSEPORT
@@ -477,11 +477,11 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
             }
 #endif
 
-            if (ls[i].fd != (ngx_socket_t) -1) {  //ÐÂÆô¶¯µÄnginx¶¼ÊÇ-1
+            if (ls[i].fd != (ngx_socket_t) -1) {  //æ–°å¯åŠ¨çš„nginxéƒ½æ˜¯-1
                 continue;
             }
 
-            if (ls[i].inherited) { //¼Ì³ÐµÄÕâÖÖÒ²²»¹Ü
+            if (ls[i].inherited) { //ç»§æ‰¿çš„è¿™ç§ä¹Ÿä¸ç®¡
 
                 /* TODO: close on exit */
                 /* TODO: nonblocking */
@@ -490,7 +490,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 continue;
             }
 
-            s = ngx_socket(ls[i].sockaddr->sa_family, ls[i].type, 0);  //´´½¨socket
+            s = ngx_socket(ls[i].sockaddr->sa_family, ls[i].type, 0);  //åˆ›å»ºsocket
 
             if (s == (ngx_socket_t) -1) {
                 ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
@@ -1102,7 +1102,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     /* disable warning: Win32 SOCKET is u_int while UNIX socket is int */
 
-    if (ngx_cycle->files && (ngx_uint_t) s >= ngx_cycle->files_n) {  //socket´óÓÚ×î´ó´ò¿ªÎÄ¼þÃèÊö·û¿Ï¶¨ÊÇ²»¶ÔµÄ
+    if (ngx_cycle->files && (ngx_uint_t) s >= ngx_cycle->files_n) {  //socketå¤§äºŽæœ€å¤§æ‰“å¼€æ–‡ä»¶æè¿°ç¬¦è‚¯å®šæ˜¯ä¸å¯¹çš„
         ngx_log_error(NGX_LOG_ALERT, log, 0,
                       "the new socket has number %d, "
                       "but only %ui files are available",
@@ -1110,9 +1110,9 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
         return NULL;
     }
 
-    c = ngx_cycle->free_connections;  //Á¬½ÓÊý×é
+    c = ngx_cycle->free_connections;  //è¿žæŽ¥æ•°ç»„
 
-    if (c == NULL) { //Ã»ÓÐfreeµÄconnectionsÊ±
+    if (c == NULL) { //æ²¡æœ‰freeçš„connectionsæ—¶
         ngx_drain_connections((ngx_cycle_t *) ngx_cycle);
         c = ngx_cycle->free_connections;
     }
@@ -1125,35 +1125,35 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
         return NULL;
     }
 
-    ngx_cycle->free_connections = c->data; //¶ÔÁ´±íÍ·È¡ÏÂÒ»¸öconnection£¬freeÖ¸ÏòÏÂÒ»¸ö
-    ngx_cycle->free_connection_n--; //¼ÆÊý-1
+    ngx_cycle->free_connections = c->data; //å¯¹é“¾è¡¨å¤´å–ä¸‹ä¸€ä¸ªconnectionï¼ŒfreeæŒ‡å‘ä¸‹ä¸€ä¸ª
+    ngx_cycle->free_connection_n--; //è®¡æ•°-1
 
     if (ngx_cycle->files && ngx_cycle->files[s] == NULL) {
-        ngx_cycle->files[s] = c; //°Ñconnection¶ÔÏó·ÅÈëfilesÖÐ¶ÔÓ¦µÄ¿Õ¼ä£¬ÎÄ¼þÃèÊö·ûÎªË÷Òý
+        ngx_cycle->files[s] = c; //æŠŠconnectionå¯¹è±¡æ”¾å…¥filesä¸­å¯¹åº”çš„ç©ºé—´ï¼Œæ–‡ä»¶æè¿°ç¬¦ä¸ºç´¢å¼•
     }
 
-    rev = c->read; //readÊÂ¼þ
-    wev = c->write; //writeÊÂ¼þ
+    rev = c->read; //readäº‹ä»¶
+    wev = c->write; //writeäº‹ä»¶
 
-    ngx_memzero(c, sizeof(ngx_connection_t)); //ÇåÁã
+    ngx_memzero(c, sizeof(ngx_connection_t)); //æ¸…é›¶
 
-    c->read = rev; //ÖØÐÂ¹ÒÉÏreadÊÂ¼þ£¬·ÏÎïÀïÓÃ£¬²»±ØÔÙÉêÇë
-    c->write = wev; //ÖØÐÂ¹ÒÉÏwriteÊÂ¼þ
-    c->fd = s;  //ÉèÖÃfd
+    c->read = rev; //é‡æ–°æŒ‚ä¸Šreadäº‹ä»¶ï¼ŒåºŸç‰©é‡Œç”¨ï¼Œä¸å¿…å†ç”³è¯·
+    c->write = wev; //é‡æ–°æŒ‚ä¸Šwriteäº‹ä»¶
+    c->fd = s;  //è®¾ç½®fd
     c->log = log;
 
     instance = rev->instance;
 
-    ngx_memzero(rev, sizeof(ngx_event_t)); //ÇåÀí
+    ngx_memzero(rev, sizeof(ngx_event_t)); //æ¸…ç†
     ngx_memzero(wev, sizeof(ngx_event_t));
 
-    rev->instance = !instance; //ÕâÊÇÐÂ»ñÈ¡µÄconnection£¬È¡·´
+    rev->instance = !instance; //è¿™æ˜¯æ–°èŽ·å–çš„connectionï¼Œå–å
     wev->instance = !instance;
 
     rev->index = NGX_INVALID_INDEX;
     wev->index = NGX_INVALID_INDEX;
 
-    rev->data = c; //Ö¸Ïòconnection
+    rev->data = c; //æŒ‡å‘connection
     wev->data = c;
 
     wev->write = 1;
@@ -1315,7 +1315,7 @@ ngx_drain_connections(ngx_cycle_t *cycle)
                        "reusing connection");
 
         c->close = 1;
-        c->read->handler(c->read); //±ÈÈç£¬ ngx_http_keepalive_handler£¬´Óreusable_connections_queueÕªÏÂ¹ÒÔÚ free_connections ÉÏ
+        c->read->handler(c->read); //æ¯”å¦‚ï¼Œ ngx_http_keepalive_handlerï¼Œä»Žreusable_connections_queueæ‘˜ä¸‹æŒ‚åœ¨ free_connections ä¸Š
     }
 }
 
