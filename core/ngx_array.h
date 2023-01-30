@@ -14,10 +14,10 @@
 
 
 typedef struct {
-    void        *elts;   //Ö¸ÏòÁ¬ÐøÄÚ´æ¿Õ¼ä
-    ngx_uint_t   nelts;  //Êý×éÒÑÊ¹ÓÃ¸öÊý
-    size_t       size;   //µ¥Ôª´óÐ¡
-    ngx_uint_t   nalloc; //µ¥ÔªÊýÁ¿
+    void        *elts;   //æŒ‡å‘è¿žç»­å†…å­˜ç©ºé—´
+    ngx_uint_t   nelts;  //æ•°ç»„å·²ä½¿ç”¨ä¸ªæ•°
+    size_t       size;   //å•å…ƒå¤§å°
+    ngx_uint_t   nalloc; //å•å…ƒæ•°é‡
     ngx_pool_t  *pool;   //cycle->pool
 } ngx_array_t;
 

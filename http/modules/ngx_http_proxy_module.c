@@ -317,7 +317,7 @@ static ngx_command_t  ngx_http_proxy_commands[] = {
       offsetof(ngx_http_proxy_loc_conf_t, upstream.ignore_client_abort),
       NULL },
 
-	// Ö§³Ösnatpool¹¦ÄÜ
+	// æ”¯æŒsnatpoolåŠŸèƒ½
 	{ ngx_string("proxy_snat_pool"),
 		NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
 		ngx_http_upstream_snat_set_slot,
@@ -865,7 +865,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
     ngx_http_proxy_main_conf_t  *pmcf;
 #endif
 
-    if (ngx_http_upstream_create(r) != NGX_OK) { // <----------- upstream³õÊ¼»¯
+    if (ngx_http_upstream_create(r) != NGX_OK) { // <----------- upstreamåˆå§‹åŒ–
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
@@ -874,7 +874,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    ngx_http_set_ctx(r, ctx, ngx_http_proxy_module); //ÉèÖÃproxyÄ£¿éµÄctx
+    ngx_http_set_ctx(r, ctx, ngx_http_proxy_module); //è®¾ç½®proxyæ¨¡å—çš„ctx
 
     plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
 
@@ -943,7 +943,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
         r->request_body_no_buffering = 1;
     }
 
-    rc = ngx_http_read_client_request_body(r, ngx_http_upstream_init);  //ngx_http_upstream_init Æô¶¯upstream»úÖÆ
+    rc = ngx_http_read_client_request_body(r, ngx_http_upstream_init);  //ngx_http_upstream_init å¯åŠ¨upstreamæœºåˆ¶
 
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
         return rc;
@@ -3585,7 +3585,7 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
 
 
 static char *
-ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //proxy_PassÖ¸Áî
+ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //proxy_PassæŒ‡ä»¤
 {
     ngx_http_proxy_loc_conf_t *plcf = conf;
 
@@ -3601,9 +3601,9 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //proxy_Pas
         return "is duplicate";
     }
 
-    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module); //ËûµÄÉÏÒ»¼¶locationÖ¸Áî
+    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module); //ä»–çš„ä¸Šä¸€çº§locationæŒ‡ä»¤
 
-    clcf->handler = ngx_http_proxy_handler; //ÉèÖÃproxy´¦Àíº¯Êı
+    clcf->handler = ngx_http_proxy_handler; //è®¾ç½®proxyå¤„ç†å‡½æ•°
 
     if (clcf->name.len && clcf->name.data[clcf->name.len - 1] == '/') {
         clcf->auto_redirect = 1;

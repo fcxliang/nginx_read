@@ -71,8 +71,8 @@ typedef struct {
 
     unsigned                   set:1;
     unsigned                   default_server:1;
-    unsigned                   bind:1;
-    unsigned                   wildcard:1;
+    unsigned                   bind:1; //是否已经绑定socket
+    unsigned                   wildcard:1; //是否是泛地址
     unsigned                   ssl:1;
     unsigned                   http2:1;
 #if (NGX_HAVE_INET6)

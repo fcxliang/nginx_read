@@ -25,7 +25,7 @@
  */
 
 
-static ngx_str_t  *ngx_sys_errlist; //´íÎóĞÅÏ¢Ó³Éä±í£¬´íÎóid --- ´íÎóĞÅÏ¢
+static ngx_str_t  *ngx_sys_errlist; //é”™è¯¯ä¿¡æ¯æ˜ å°„è¡¨ï¼Œé”™è¯¯id --- é”™è¯¯ä¿¡æ¯
 static ngx_str_t   ngx_unknown_error = ngx_string("Unknown error");
 
 
@@ -55,7 +55,7 @@ ngx_strerror_init(void)
      * malloc() is used and possible errors are logged using strerror().
      */
 
-    len = NGX_SYS_NERR * sizeof(ngx_str_t); //135??¦Ì£¤¦Ë
+    len = NGX_SYS_NERR * sizeof(ngx_str_t); //135ä¸ªerrä¿¡æ¯å­—ç¬¦ä¸²æŒ‡é’ˆ
 
     ngx_sys_errlist = malloc(len);
     if (ngx_sys_errlist == NULL) {
@@ -64,7 +64,7 @@ ngx_strerror_init(void)
 
     for (err = 0; err < NGX_SYS_NERR; err++) {
         msg = strerror(err);
-        len = ngx_strlen(msg);
+        len = ngx_strlen(msg); //å­—ç¬¦ä¸²çš„é•¿åº¦
 
         p = malloc(len);
         if (p == NULL) {

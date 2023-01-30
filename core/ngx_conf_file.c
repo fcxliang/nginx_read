@@ -67,7 +67,7 @@ ngx_conf_param(ngx_conf_t *cf)
     ngx_buf_t         b;
     ngx_conf_file_t   conf_file;
 
-    param = &cf->cycle->conf_param;  //Ŀǰ��-gָ���Ĳ���
+    param = &cf->cycle->conf_param;  //目前是-g指定的参数
 
     if (param->len == 0) {
         return NGX_CONF_OK;
@@ -153,7 +153,8 @@ ngx_conf_add_dump(ngx_conf_t *cf, ngx_str_t *filename)
     return NGX_OK;
 }
 
-
+/* ngx_conf_read_token用于从配置文件内容中提取token，通常在一个配置行结束或者一个配置块开始时返回。
+提取了这些token后，还需要找到对应的选项并且进行赋值，这就是ngx_conf_parse的作用。*/
 char *
 ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 {
@@ -301,7 +302,8 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
                 goto failed;
             }
 
-            rv = (*cf->handler)(cf, NULL, cf->handler_conf);
+            // ngx_conf_parse这个函数大多也是在block函数里调用，主流程主配置除外
+            rv = (*cf->handler)(cf, NULL, cf->handler_conf); //例如 ngx_http_split_clients，这个handle在解析指令时赋值
             if (rv == NGX_CONF_OK) {
                 continue;
             }

@@ -275,7 +275,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
-    if (ngx_conf_parse(&conf, &cycle->conf_file) != NGX_CONF_OK) {
+    if (ngx_conf_parse(&conf, &cycle->conf_file) != NGX_CONF_OK) { //各个模块也会调用
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
         return NULL;

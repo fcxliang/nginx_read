@@ -103,7 +103,7 @@ uint32_t *ngx_crc32_table_short = ngx_crc32_table16;
 
 
 ngx_int_t
-ngx_crc32_table_init(void)  //地址对齐到cacheline
+ngx_crc32_table_init(void)  //鍦板潃瀵归綈鍒癱acheline
 {
     void  *p;
 
@@ -119,7 +119,7 @@ ngx_crc32_table_init(void)  //地址对齐到cacheline
         return NGX_ERROR;
     }
 
-    p = ngx_align_ptr(p, ngx_cacheline_size); //地址对其
+    p = ngx_align_ptr(p, ngx_cacheline_size); //鍦板潃瀵瑰叾
 
     ngx_memcpy(p, ngx_crc32_table16, 16 * sizeof(uint32_t));
 

@@ -14,8 +14,8 @@
 
 
 typedef struct {
-    size_t      len;   //string³¤¶È
-    u_char     *data;  //Ö¸ÏòstringÊı¾İ
+    size_t      len;   //stringé•¿åº¦
+    u_char     *data;  //æŒ‡å‘stringæ•°æ®
 } ngx_str_t;
 
 
@@ -34,7 +34,7 @@ typedef struct {
     unsigned    escape:1;
 
     u_char     *data;
-} ngx_variable_value_t;  //´æ·Å±äÁ¿Öµ
+} ngx_variable_value_t;  //å­˜æ”¾å˜é‡å€¼
 
 
 #define ngx_string(str)     { sizeof(str) - 1, (u_char *) str }

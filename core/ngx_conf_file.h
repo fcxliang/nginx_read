@@ -20,8 +20,8 @@
  */
 
 #define NGX_CONF_NOARGS      0x00000001
-#define NGX_CONF_TAKE1       0x00000002   //½ÓÊÜÒ»¸ö²ÎÊı
-#define NGX_CONF_TAKE2       0x00000004   //½ÓÊÜ2¸ö²ÎÊı
+#define NGX_CONF_TAKE1       0x00000002   //ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define NGX_CONF_TAKE2       0x00000004   //ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #define NGX_CONF_TAKE3       0x00000008
 #define NGX_CONF_TAKE4       0x00000010
 #define NGX_CONF_TAKE5       0x00000020
@@ -30,7 +30,7 @@
 
 #define NGX_CONF_MAX_ARGS    8
 
-#define NGX_CONF_TAKE12      (NGX_CONF_TAKE1|NGX_CONF_TAKE2)  //½ÓÊÜÒ»¸ö»òÕßÁ½¸ö²ÎÊı
+#define NGX_CONF_TAKE12      (NGX_CONF_TAKE1|NGX_CONF_TAKE2)  //ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #define NGX_CONF_TAKE13      (NGX_CONF_TAKE1|NGX_CONF_TAKE3)
 
 #define NGX_CONF_TAKE23      (NGX_CONF_TAKE2|NGX_CONF_TAKE3)
@@ -77,7 +77,7 @@
 struct ngx_command_s {
     ngx_str_t             name;
     ngx_uint_t            type;
-    char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+    char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);  //å„ç§blockå‡½æ•°ï¼Œç”¨äºè§£ææŒ‡ä»¤
     ngx_uint_t            conf;
     ngx_uint_t            offset;
     void                 *post;
@@ -112,10 +112,10 @@ typedef struct {
 typedef char *(*ngx_conf_handler_pt)(ngx_conf_t *cf,
     ngx_command_t *dummy, void *conf);
 
-
+//è¡¨ç¤ºè§£æå½“å‰é…ç½®æŒ‡ä»¤æ˜¯çš„è¿è¡Œæ—¶ç¯å¢ƒæ•°æ®
 struct ngx_conf_s {
     char                 *name;
-    ngx_array_t          *args;
+    ngx_array_t          *args; //åˆ†å‰²å¥½çš„é…ç½®æ–‡ä»¶æŒ‡ä»¤å­—ç¬¦ä¸²  [0]æŒ‡ä»¤å  [1] å‚æ•°1 [n]å‚æ•°n
 
     ngx_cycle_t          *cycle;
     ngx_pool_t           *pool;
@@ -123,7 +123,7 @@ struct ngx_conf_s {
     ngx_conf_file_t      *conf_file;
     ngx_log_t            *log;
 
-    void                 *ctx;
+    void                 *ctx; //æ ¹æ®æ¨¡å—å˜åŒ–ï¼Œhttpä¸ºngx_http_conf_ctx_t
     ngx_uint_t            module_type;
     ngx_uint_t            cmd_type;
 

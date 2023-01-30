@@ -228,7 +228,7 @@ ngx_http_init_connection(ngx_connection_t *c)
 
     /* find the server configuration for the address:port */
 
-    port = c->listening->servers;
+    port = c->listening->servers;  //servers在 ngx_http_init_listening 中初始化
 
     if (port->naddrs > 1) {
 
@@ -237,7 +237,7 @@ ngx_http_init_connection(ngx_connection_t *c)
          * is an "*:port" wildcard so getsockname() in ngx_http_server_addr()
          * is required to determine a server address
          */
-
+        //设置c->local_sockaddr
         if (ngx_connection_local_sockaddr(c, NULL, 0) != NGX_OK) {
             ngx_http_close_connection(c);
             return;
@@ -426,7 +426,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         b->end = b->last + size;
     }
 
-    n = c->recv(c, b->last, size);  //接受数据
+    n = c->recv(c, b->last, size);  //��������
 
     if (n == NGX_AGAIN) {
 
@@ -490,14 +490,14 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     ngx_reusable_connection(c, 0);
 
-    c->data = ngx_http_create_request(c);  // <<----------------------------创建http request
+    c->data = ngx_http_create_request(c);  // <<----------------------------����http request
     if (c->data == NULL) {
         ngx_http_close_connection(c);
         return;
     }
 
     rev->handler = ngx_http_process_request_line;
-    ngx_http_process_request_line(rev);  // <<-----------------------------------接收数据，解析请求行
+    ngx_http_process_request_line(rev);  // <<-----------------------------------�������ݣ�����������
 }
 
 

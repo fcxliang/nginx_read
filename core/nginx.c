@@ -269,7 +269,8 @@ main(int argc, char *const *argv)
 		log_level
 	*/
 
-    if (ngx_process_options(&init_cycle) != NGX_OK) { //路径 配置文件路径<--------------使用init_cycle.pool
+    //工作路径，配置文件目录，配置文件路径
+    if (ngx_process_options(&init_cycle) != NGX_OK) { //<--------------使用init_cycle.pool
         return 1;
     }
 
@@ -290,7 +291,7 @@ main(int argc, char *const *argv)
      * ngx_crc32_table_init() requires ngx_cacheline_size set in ngx_os_init()
      */
 
-    if (ngx_crc32_table_init() != NGX_OK) { //对齐crc表的地址到cacheline
+    if (ngx_crc32_table_init() != NGX_OK) { //对齐crc表的地址到上面函数获得的cacheline, 避免两次访存
         return 1;
     }
 
@@ -308,7 +309,7 @@ main(int argc, char *const *argv)
 
     ngx_slab_sizes_init(); //初始化slab的最大，最小内存size
 
-	//从来自环境变量NGINX的sockid上获得旧的socket的信息，设置到listening上
+	//从来自环境变量NGINX的sockid上获得旧的socket的信息，设置到cycle的listening上
     if (ngx_add_inherited_sockets(&init_cycle) != NGX_OK) {  //<------------使用init_cycle.pool
         return 1;
     }
@@ -959,7 +960,7 @@ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
     }
 
     for (i = 0; i < argc; i++) {
-        len = ngx_strlen(argv[i]) + 1;
+        len = ngx_strlen(argv[i]) + 1; //这样拷贝时会带上argv的‘/0’
 
         ngx_argv[i] = ngx_alloc(len, cycle->log); //为每个参数申请具体的空间
         if (ngx_argv[i] == NULL) {
@@ -973,7 +974,7 @@ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
 
 #endif
 
-    ngx_os_environ = environ;
+    ngx_os_environ = environ; //系统环境变量
 
     return NGX_OK;
 }
@@ -1070,6 +1071,7 @@ ngx_process_options(ngx_cycle_t *cycle)
          p > cycle->conf_file.data;
          p--)
     {
+        // 如果设置了-c, 优先使用-c，所以此处需要更新配置目录
         if (ngx_path_separator(*p)) {
         	//找到最右边的/，说明/左边的全是路径，拿这个路径更新cycle->conf_prefix，说明conf_prefix以配置文件为准
             cycle->conf_prefix.len = p - cycle->conf_file.data + 1;
@@ -1078,7 +1080,7 @@ ngx_process_options(ngx_cycle_t *cycle)
         }
     }
 
-    if (ngx_conf_params) {
+    if (ngx_conf_params) { //set global directives out of configuration file
         cycle->conf_param.len = ngx_strlen(ngx_conf_params);
         cycle->conf_param.data = ngx_conf_params;
     }

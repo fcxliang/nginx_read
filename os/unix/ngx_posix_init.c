@@ -10,8 +10,8 @@
 #include <nginx.h>
 
 
-ngx_int_t   ngx_ncpu;
-ngx_int_t   ngx_max_sockets;  //ÏµÍ³Ö§³ÖµÄ×î´ósocketÊı
+ngx_int_t   ngx_ncpu; //CPUæ ¸æ•°
+ngx_int_t   ngx_max_sockets;  //ç³»ç»Ÿæ”¯æŒçš„æœ€å¤§socketæ•°
 ngx_uint_t  ngx_inherited_nonblocking;
 ngx_uint_t  ngx_tcp_nodelay_and_tcp_nopush;
 
@@ -31,13 +31,13 @@ ngx_os_io_t ngx_os_io = {
 };
 
 /*
-	ÉèÖÃÏµÍ³²ÎÊı
-	ngx_linux_kern_ostype   	²Ù×÷ÏµÍ³ÀàĞÍ
-	ngx_linux_kern_osrelease  	·¢ĞĞ°æ±¾
-	ngx_pagesize 				Ò³´óĞ¡
-	ngx_cacheline_size 			»º´æ½»»»´óĞ¡
-	ngx_max_sockets				×î´ósocketÊıÁ¿
-	ÉèÖÃËæ»úÖÖ×Ó
+	è®¾ç½®ç³»ç»Ÿå‚æ•°
+	ngx_linux_kern_ostype   	æ“ä½œç³»ç»Ÿç±»å‹
+	ngx_linux_kern_osrelease  	å‘è¡Œç‰ˆæœ¬
+	ngx_pagesize 				é¡µå¤§å°
+	ngx_cacheline_size 			ç¼“å­˜äº¤æ¢å¤§å°
+	ngx_max_sockets				æœ€å¤§socketæ•°é‡
+	è®¾ç½®éšæœºç§å­
 */
 ngx_int_t
 ngx_os_init(ngx_log_t *log)
@@ -49,23 +49,23 @@ ngx_os_init(ngx_log_t *log)
 #endif
 
 #if (NGX_HAVE_OS_SPECIFIC_INIT)
-    if (ngx_os_specific_init(log) != NGX_OK) { //linuxÉÏÎª»ñµÃÄÚºË°æ±¾ĞÅÏ¢
+    if (ngx_os_specific_init(log) != NGX_OK) { //linuxä¸Šä¸ºè·å¾—å†…æ ¸ç‰ˆæœ¬ä¿¡æ¯
         return NGX_ERROR;
     }
 #endif
 
-    if (ngx_init_setproctitle(log) != NGX_OK) {
+    if (ngx_init_setproctitle(log) != NGX_OK) {  //<-----è‹¥è¦ä¿®æ”¹è¿›ç¨‹åå­—ä»è¿™é‡Œçœ‹èµ·
         return NGX_ERROR;
     }
 
     ngx_pagesize = getpagesize();
     ngx_cacheline_size = NGX_CPU_CACHE_LINE;
 
-    for (n = ngx_pagesize; n >>= 1; ngx_pagesize_shift++) { /* void */ } //4kµÄ»° shift¾ÍÊÇ12
+    for (n = ngx_pagesize; n >>= 1; ngx_pagesize_shift++) { /* void */ } //4kçš„è¯ shiftå°±æ˜¯12
 
 #if (NGX_HAVE_SC_NPROCESSORS_ONLN)
     if (ngx_ncpu == 0) {
-        ngx_ncpu = sysconf(_SC_NPROCESSORS_ONLN);  // »ñÈ¡¿ÉÓÃµÄcpuºËÊı
+        ngx_ncpu = sysconf(_SC_NPROCESSORS_ONLN);  // è·å–å¯ç”¨çš„cpuæ ¸æ•°
     }
 #endif
 
@@ -74,21 +74,21 @@ ngx_os_init(ngx_log_t *log)
     }
 
 #if (NGX_HAVE_LEVEL1_DCACHE_LINESIZE)
-    size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);  // »ñÈ¡cpu cache line
+    size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);  // è·å–cpu cache line
     if (size > 0) {
         ngx_cacheline_size = size;
     }
 #endif
 
-    ngx_cpuinfo();  //»ñµÃ ngx_cacheline_size 
+    ngx_cpuinfo();  //è·å¾— ngx_cacheline_size 
 
-    if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) { //»ñµÃrlmt
+    if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) { //è·å¾—rlmt
         ngx_log_error(NGX_LOG_ALERT, log, errno,
                       "getrlimit(RLIMIT_NOFILE) failed");
         return NGX_ERROR;
     }
 
-    ngx_max_sockets = (ngx_int_t) rlmt.rlim_cur; //ÏµÍ³Ö§³ÖµÄ×î´ósocketÊı
+    ngx_max_sockets = (ngx_int_t) rlmt.rlim_cur; //ç³»ç»Ÿæ”¯æŒçš„æœ€å¤§socketæ•°
 
 #if (NGX_HAVE_INHERITED_NONBLOCK || NGX_HAVE_ACCEPT4)
     ngx_inherited_nonblocking = 1;
@@ -97,14 +97,14 @@ ngx_os_init(ngx_log_t *log)
 #endif
 
     tp = ngx_timeofday();
-    srandom(((unsigned) ngx_pid << 16) ^ tp->sec ^ tp->msec); //Ëæ»úÖÖ×Ó
+    srandom(((unsigned) ngx_pid << 16) ^ tp->sec ^ tp->msec); //éšæœºç§å­
 
     return NGX_OK;
 }
 
 
 /*
-	Nginx °æ±¾£¬²Ù×÷ÏµÍ³ÀàĞÍ£¬·¢ĞĞ°æĞ´ÈëÈÕÖ¾
+	Nginx ç‰ˆæœ¬ï¼Œæ“ä½œç³»ç»Ÿç±»å‹ï¼Œå‘è¡Œç‰ˆå†™å…¥æ—¥å¿—
 */
 void
 ngx_os_status(ngx_log_t *log)

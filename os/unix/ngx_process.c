@@ -28,7 +28,7 @@ static void ngx_unlock_mutexes(ngx_pid_t pid);
 
 int              ngx_argc;
 char           **ngx_argv; //ngx_argv数组，每个元素指向一个存放具体arg的空间
-char           **ngx_os_argv;
+char           **ngx_os_argv; //原始的的argv表，启动参数传入
 
 ngx_int_t        ngx_process_slot;
 ngx_socket_t     ngx_channel;  //channel 1

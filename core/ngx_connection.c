@@ -1339,7 +1339,7 @@ ngx_close_idle_connections(ngx_cycle_t *cycle)
     }
 }
 
-
+// 设置c->local_sockaddr 并设置地址字符串s
 ngx_int_t
 ngx_connection_local_sockaddr(ngx_connection_t *c, ngx_str_t *s,
     ngx_uint_t port)
@@ -1382,11 +1382,12 @@ ngx_connection_local_sockaddr(ngx_connection_t *c, ngx_str_t *s,
         }
     }
 
+    //如果c->local_sockaddr没有地址就从套接字上取地址
     if (addr == 0) {
 
         len = sizeof(ngx_sockaddr_t);
 
-        if (getsockname(c->fd, &sa.sockaddr, &len) == -1) {
+        if (getsockname(c->fd, &sa.sockaddr, &len) == -1) { //获取套接字fd的本地地址
             ngx_connection_error(c, ngx_socket_errno, "getsockname() failed");
             return NGX_ERROR;
         }
@@ -1405,6 +1406,7 @@ ngx_connection_local_sockaddr(ngx_connection_t *c, ngx_str_t *s,
         return NGX_OK;
     }
 
+    //把s->data设置成ip:port/ip
     s->len = ngx_sock_ntop(c->local_sockaddr, c->local_socklen,
                            s->data, s->len, port);
 

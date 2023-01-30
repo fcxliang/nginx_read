@@ -178,7 +178,7 @@ ngx_inet6_addr(u_char *p, size_t len, u_char *addr)
 
 #endif
 
-
+//将地址按ip:port或者ip的形式写道text里，并返回长度
 size_t
 ngx_sock_ntop(struct sockaddr *sa, socklen_t socklen, u_char *text, size_t len,
     ngx_uint_t port)
@@ -204,13 +204,13 @@ ngx_sock_ntop(struct sockaddr *sa, socklen_t socklen, u_char *text, size_t len,
 
         if (port) {
             p = ngx_snprintf(text, len, "%ud.%ud.%ud.%ud:%d",
-                             p[0], p[1], p[2], p[3], ntohs(sin->sin_port));
+                             p[0], `p[1], p[2], p[3], ntohs(sin->sin_port));
         } else {
             p = ngx_snprintf(text, len, "%ud.%ud.%ud.%ud",
                              p[0], p[1], p[2], p[3]);
         }
 
-        return (p - text); //ʵ�ʵ��ַ�������
+        return (p - text); //实际的字符串长度
 
 #if (NGX_HAVE_INET6)
 

@@ -385,7 +385,7 @@ struct ngx_http_request_s {
     ngx_http_cache_t                 *cache;
 #endif
 
-    ngx_http_upstream_t              *upstream;  //指向上游
+    ngx_http_upstream_t              *upstream;  //鎸囧悜涓婃父
     ngx_array_t                      *upstream_states;
                                          /* of ngx_http_upstream_state_t */
 

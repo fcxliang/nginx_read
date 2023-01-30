@@ -122,7 +122,7 @@ typedef enum {
 
 
 struct ngx_connection_s {
-    void               *data; //在event模块里是指向下一个connection，即next指针
+    void               *data; //在event模块里是指向下一个connection，即next指针;http 模块里ngx_http_connection_t
     ngx_event_t        *read;
     ngx_event_t        *write;
 

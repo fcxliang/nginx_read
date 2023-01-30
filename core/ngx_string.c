@@ -1981,24 +1981,26 @@ ngx_str_rbtree_lookup(ngx_rbtree_t *rbtree, ngx_str_t *val, uint32_t hash)
 
 
 /* ngx_sort() is implemented as insertion sort because we need stable sort */
-
+// cmp 比如 ngx_http_cmp_conf_addrs
+// 插入排序，升还是降取决于cmp
 void
 ngx_sort(void *base, size_t n, size_t size,
     ngx_int_t (*cmp)(const void *, const void *))
 {
     u_char  *p1, *p2, *p;
 
-    p = ngx_alloc(size, ngx_cycle->log);
+    p = ngx_alloc(size, ngx_cycle->log); // 中间元素的空间
     if (p == NULL) {
         return;
     }
 
-    for (p1 = (u_char *) base + size;
-         p1 < (u_char *) base + n * size;
-         p1 += size)
+    for (p1 = (u_char *) base + size; //第二个元素
+         p1 < (u_char *) base + n * size; // 最后的地址
+         p1 += size) //步进一个size
     {
         ngx_memcpy(p, p1, size);
 
+        //从外循环游标继续向后
         for (p2 = p1;
              p2 > (u_char *) base && cmp(p2 - size, p) > 0;
              p2 -= size)
@@ -2009,7 +2011,7 @@ ngx_sort(void *base, size_t n, size_t size,
         ngx_memcpy(p2, p, size);
     }
 
-    ngx_free(p);
+    ngx_free(p); //释放掉中间元素
 }
 
 

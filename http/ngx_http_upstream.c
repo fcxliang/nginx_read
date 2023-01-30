@@ -478,7 +478,7 @@ ngx_conf_bitmask_t  ngx_http_upstream_ignore_headers_masks[] = {
     { ngx_null_string, 0 }
 };
 
-// upstreamÈë¿Ú
+// upstreamï¿½ï¿½ï¿½
 ngx_int_t
 ngx_http_upstream_create(ngx_http_request_t *r)
 {
@@ -6149,14 +6149,14 @@ ngx_http_upstream_snat_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
         return "address list error!";
     }
 
-    // ¼ÆËãµØÖ·¸öÊý
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½
     for (cur = 0; cur < len; cur ++) {
         if (paddrs[cur] == ',') {
             naddr ++;
         }
     }
 
-    naddr ++; //ÒòÎª×îºóÒ»¸öÃ»ÓÐ£¬
+    naddr ++; //ï¿½ï¿½Îªï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ã»ï¿½Ð£ï¿½
 
     snatpool = ngx_array_create(cf->pool, naddr, sizeof(ngx_http_upstream_local_t));
 	
@@ -6169,7 +6169,7 @@ ngx_http_upstream_snat_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
             unsigned char                  *paddr;
 
             addr_size = cur -start;
-            paddr = ngx_pcalloc(cf->pool, addr_size); //ÉêÇë³¤¶ÈÎª×Ö·û´®³¤¶È£¬²»ÐèÒªÎª/0ÉêÇë¿Õ¼ä
+            paddr = ngx_pcalloc(cf->pool, addr_size); //ï¿½ï¿½ï¿½ë³¤ï¿½ï¿½Îªï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÎª/0ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½
             if (paddr == NULL) {
                 return NGX_CONF_ERROR;
             }
@@ -6180,7 +6180,7 @@ ngx_http_upstream_snat_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
                 return NGX_CONF_ERROR;
             }
 
-            // ÉêÇëipµØÖ·´æ´¢
+            // ï¿½ï¿½ï¿½ï¿½ipï¿½ï¿½Ö·ï¿½æ´¢
             local->addr = ngx_pcalloc(cf->pool, sizeof(ngx_addr_t));
             if (local->addr == NULL) {
                 return NGX_CONF_ERROR;
@@ -6214,7 +6214,7 @@ ngx_http_upstream_snat_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
     return NGX_CONF_OK;
 }
 
-//ÉèÖÃÔ´µØÖ·£¬Ä¿Ç°²ÉÓÃËæ»úËã·¨
+//ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ö·ï¿½ï¿½Ä¿Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã·¨
 static ngx_int_t ngx_http_upstream_snat(ngx_http_request_t *r, ngx_http_upstream_t *u, ngx_array_t *snat_pool) {
 
     int chose = 0;
@@ -6250,33 +6250,33 @@ ngx_http_upstream_bind_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
     ngx_http_upstream_local_t         **plocal, *local;
     ngx_http_compile_complex_value_t    ccv;
 
-	//ÉèÖÃµÄÄ¿±ê
+	//ï¿½ï¿½ï¿½Ãµï¿½Ä¿ï¿½ï¿½
     plocal = (ngx_http_upstream_local_t **) (p + cmd->offset);  //ngx_http_proxy_loc_conf_t -> upstream -> *local
 
-    if (*plocal != NGX_CONF_UNSET_PTR) { //  plocal²»¿ÉÄÜÓÐÖµ
+    if (*plocal != NGX_CONF_UNSET_PTR) { //  plocalï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
         return "is duplicate";
     }
 
-    value = cf->args->elts; //²ÎÊýÊý×é
+    value = cf->args->elts; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 	//proxy_bind  off
-    if (cf->args->nelts == 2 && ngx_strcmp(value[1].data, "off") == 0) { //Êý×éÀïÖ»Ê¹ÓÃÁË2¸öÔªËØ£¬ÇÒµÚ¶þ¸öÊÇoff
+    if (cf->args->nelts == 2 && ngx_strcmp(value[1].data, "off") == 0) { //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö»Ê¹ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½Ôªï¿½Ø£ï¿½ï¿½ÒµÚ¶ï¿½ï¿½ï¿½ï¿½ï¿½off
         *plocal = NULL;
         return NGX_CONF_OK;
     }
 
-	// ²»ÊÇoffµÄÇé¿ö£¬ÐèÒªÈ¡³öipµØÖ·
+	// ï¿½ï¿½ï¿½ï¿½offï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÈ¡ï¿½ï¿½ipï¿½ï¿½Ö·
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
     ccv.cf = cf;
     ccv.value = &value[1]; //off
     ccv.complex_value = &cv;
 
-    if (ngx_http_compile_complex_value(&ccv) != NGX_OK) { // ½âÎö±äÁ¿
+    if (ngx_http_compile_complex_value(&ccv) != NGX_OK) { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         return NGX_CONF_ERROR;
     }
 
-	//ÏÖÔÚ´´½¨ÆðlocalÀ´
+	//ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½localï¿½ï¿½
     local = ngx_pcalloc(cf->pool, sizeof(ngx_http_upstream_local_t));
     if (local == NULL) {
         return NGX_CONF_ERROR;
@@ -6284,16 +6284,16 @@ ngx_http_upstream_bind_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
 
     *plocal = local;
 
-    if (cv.lengths) { //Èç¹ûÊÇÒýÓÃÁË±äÁ¿
-        local->value = ngx_palloc(cf->pool, sizeof(ngx_http_complex_value_t)); //ÉêÇë¸´ÔÓÖµ´æ´¢¿Õ¼ä
+    if (cv.lengths) { //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë±ï¿½ï¿½ï¿½
+        local->value = ngx_palloc(cf->pool, sizeof(ngx_http_complex_value_t)); //ï¿½ï¿½ï¿½ë¸´ï¿½ï¿½Öµï¿½æ´¢ï¿½Õ¼ï¿½
         if (local->value == NULL) {
             return NGX_CONF_ERROR;
         }
 
-        *local->value = cv; //°Ñ½â³öµÄ¸´ÔÓÖµ¸³Öµ¸øvalue
+        *local->value = cv; //ï¿½Ñ½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½Öµï¿½ï¿½Öµï¿½ï¿½value
 
     } else {
-    	//µ¥´¿µÄµØÖ·
+    	//ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½Ö·
         local->addr = ngx_palloc(cf->pool, sizeof(ngx_addr_t));
         if (local->addr == NULL) {
             return NGX_CONF_ERROR;
@@ -6317,7 +6317,7 @@ ngx_http_upstream_bind_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
         }
     }
 
-    if (cf->args->nelts > 2) { //Èç¹ûÓÐ¶àÓÚÁ½¸ö²ÎÊýµÄ»°£¬¿´ÊÇ·ñÊÇÍ¸´«
+    if (cf->args->nelts > 2) { //ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Í¸ï¿½ï¿½
         if (ngx_strcmp(value[2].data, "transparent") == 0) {
 #if (NGX_HAVE_TRANSPARENT_PROXY)
             ngx_core_conf_t  *ccf;
@@ -6561,7 +6561,7 @@ ngx_http_upstream_hide_headers_hash(ngx_conf_t *cf,
     return NGX_OK;
 }
 
-
+//å»ºç«‹èµ·å†…å­˜
 static void *
 ngx_http_upstream_create_main_conf(ngx_conf_t *cf)
 {

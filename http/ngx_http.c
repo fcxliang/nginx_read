@@ -117,7 +117,7 @@ ngx_module_t  ngx_http_module = {
 
 
 static char *
-ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //����http{} ָ��
+ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} 指令
 {
     char                        *rv;
     ngx_uint_t                   mi, m, s;
@@ -128,23 +128,23 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //����http{} ָ�
     ngx_http_core_srv_conf_t   **cscfp;
     ngx_http_core_main_conf_t   *cmcf;
 
-    if (*(ngx_http_conf_ctx_t **) conf) {
+    if (*(ngx_http_conf_ctx_t **) conf) { //只能有一个http块
         return "is duplicate";
     }
 
     /* the main http context */
 
-    ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t));
+    ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t)); //申请一个http conf ctx
     if (ctx == NULL) {
         return NGX_CONF_ERROR;
     }
 
-    *(ngx_http_conf_ctx_t **) conf = ctx;
+    *(ngx_http_conf_ctx_t **) conf = ctx; //放到指针数组里
 
 
     /* count the number of the http modules and set up their indices */
 
-    ngx_http_max_module = ngx_count_modules(cf->cycle, NGX_HTTP_MODULE);
+    ngx_http_max_module = ngx_count_modules(cf->cycle, NGX_HTTP_MODULE); //计算所有的http模块数量
 
 
     /* the http main_conf context, it is the same in the all http contexts */
@@ -182,7 +182,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //����http{} ָ�
      * create the main_conf's, the null srv_conf's, and the null loc_conf's
      * of the all http modules
      */
-
+    //调用各个模块的解析main srv location 的create conf函数
     for (m = 0; cf->cycle->modules[m]; m++) {
         if (cf->cycle->modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -323,14 +323,14 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //����http{} ָ�
     *cf = pcf;
 
 
-    if (ngx_http_init_phase_handlers(cf, cmcf) != NGX_OK) {  // ��ʼ�������׶εĴ�������
+    if (ngx_http_init_phase_handlers(cf, cmcf) != NGX_OK) {  // 初始化各个阶段的处理函数
         return NGX_CONF_ERROR;
     }
 
 
     /* optimize the lists of ports, addresses and server names */
 
-    if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) { // <<----��ʼ�����ȵ�
+    if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) { // <<----开始监听等等
         return NGX_CONF_ERROR;
     }
 
@@ -1388,7 +1388,7 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
 
     port = ports->elts;
     for (p = 0; p < ports->nelts; p++) {
-
+        // 对一个port的多个addrs进行排序，泛地址放后面
         ngx_sort(port[p].addrs.elts, (size_t) port[p].addrs.nelts,
                  sizeof(ngx_http_conf_addr_t), ngx_http_cmp_conf_addrs);
 
@@ -1399,7 +1399,7 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
 
         addr = port[p].addrs.elts;
         for (a = 0; a < port[p].addrs.nelts; a++) {
-
+            // 一个地址下如有有多个server
             if (addr[a].servers.nelts > 1
 #if (NGX_PCRE)
                 || addr[a].default_server->captures
@@ -1576,7 +1576,7 @@ failed:
     return NGX_ERROR;
 }
 
-
+// one > two 1 , one < two -1 , one == two 0   
 static ngx_int_t
 ngx_http_cmp_conf_addrs(const void *one, const void *two)
 {
@@ -1632,7 +1632,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
     ngx_http_conf_addr_t      *addr;
 
     addr = port->addrs.elts;
-    last = port->addrs.nelts;
+    last = port->addrs.nelts; //地址数量
 
     /*
      * If there is a binding to an "*:port" then we need to bind() to

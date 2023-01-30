@@ -75,10 +75,10 @@ struct ngx_cycle_s {
 
     ngx_cycle_t              *old_cycle;
 
-    ngx_str_t                 conf_file;
-    ngx_str_t                 conf_param;
-    ngx_str_t                 conf_prefix; //配置文件路径
-    ngx_str_t                 prefix;  //总的默认路径
+    ngx_str_t                 conf_file; //配置文件路径
+    ngx_str_t                 conf_param; //-g 指定的参数
+    ngx_str_t                 conf_prefix; //配置文件目录
+    ngx_str_t                 prefix;  //工作目录
     ngx_str_t                 lock_file;
     ngx_str_t                 hostname;
 };

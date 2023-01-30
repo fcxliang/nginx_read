@@ -18,8 +18,8 @@ ngx_atomic_int_t      ngx_random_number = 123456;
 
 
 /*
-	如果name是全路径名称，直接true，name不改
-	如果name不是全路径，组成新的name prefix+name
+	濡傛灉name鏄叏璺緞鍚嶇О锛岀洿鎺rue锛宯ame涓嶆敼
+	濡傛灉name涓嶆槸鍏ㄨ矾寰勶紝缁勬垚鏂扮殑name prefix+name
 */
 ngx_int_t
 ngx_get_full_name(ngx_pool_t *pool, ngx_str_t *prefix, ngx_str_t *name)

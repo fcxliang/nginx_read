@@ -84,7 +84,7 @@ static ngx_uint_t  ngx_slab_exact_shift;
 
 
 /*
-	ÉèÖÃ
+	è®¾ç½®
 	ngx_slab_max_size;
 	ngx_slab_exact_size;
 	ngx_slab_exact_shift;
@@ -94,8 +94,8 @@ ngx_slab_sizes_init(void)
 {
     ngx_uint_t  n;
 
-    ngx_slab_max_size = ngx_pagesize / 2;   //×î´ósizeÊÇpageµÄÒ»°ë£¬2048
-    ngx_slab_exact_size = ngx_pagesize / (8 * sizeof(uintptr_t));  //¾«È·size£¬64×Ö½Ú£¬¼´×îÐ¡64×Ö½Ú
+    ngx_slab_max_size = ngx_pagesize / 2;   //æœ€å¤§sizeæ˜¯pageçš„ä¸€åŠï¼Œ2048
+    ngx_slab_exact_size = ngx_pagesize / (8 * sizeof(uintptr_t));  //ç²¾ç¡®sizeï¼Œ64å­—èŠ‚ï¼Œå³æœ€å°64å­—èŠ‚
     for (n = ngx_slab_exact_size; n >>= 1; ngx_slab_exact_shift++) { //shift 6
         /* void */
     }

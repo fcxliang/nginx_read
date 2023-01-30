@@ -136,7 +136,7 @@ ngx_http_parse_request_line(ngx_http_request_t *r, ngx_buf_t *b)
 
     state = r->state;
 
-    for (p = b->pos; p < b->last; p++) {
+    for (p = b->pos; p < b->last; p++) { //遍历请求
         ch = *p;
 
         switch (state) {
@@ -145,19 +145,19 @@ ngx_http_parse_request_line(ngx_http_request_t *r, ngx_buf_t *b)
         case sw_start:
             r->request_start = p;
 
-            if (ch == CR || ch == LF) {
+            if (ch == CR || ch == LF) { //略过空行
                 break;
             }
 
-            if ((ch < 'A' || ch > 'Z') && ch != '_' && ch != '-') {
+            if ((ch < 'A' || ch > 'Z') && ch != '_' && ch != '-') { //不是A-Z _ -开头，_ -开头的是什么？
                 return NGX_HTTP_PARSE_INVALID_METHOD;
             }
 
-            state = sw_method;
+            state = sw_method; //开始解析请求方法
             break;
 
         case sw_method:
-            if (ch == ' ') {
+            if (ch == ' ') { //请求行中的空格GET http://
                 r->method_end = p - 1;
                 m = r->request_start;
 
@@ -266,7 +266,7 @@ ngx_http_parse_request_line(ngx_http_request_t *r, ngx_buf_t *b)
                     break;
                 }
 
-                state = sw_spaces_before_uri;
+                state = sw_spaces_before_uri; //进入uri解析
                 break;
             }
 
@@ -279,7 +279,7 @@ ngx_http_parse_request_line(ngx_http_request_t *r, ngx_buf_t *b)
         /* space* before URI */
         case sw_spaces_before_uri:
 
-            if (ch == '/') {
+            if (ch == '/') { // “/”开头
                 r->uri_start = p;
                 state = sw_after_slash_in_uri;
                 break;

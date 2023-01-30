@@ -67,8 +67,8 @@ ngx_module_t  ngx_errlog_module = {
 };
 
 
-static ngx_log_t        ngx_log;   //ÈÕÖ¾½á¹¹
-static ngx_open_file_t  ngx_log_file; //´ò¿ªµÄÈÕÖ¾ÎÄ¼þÃèÊö·û
+static ngx_log_t        ngx_log;   //æ—¥å¿—ç»“æž„
+static ngx_open_file_t  ngx_log_file; //æ‰“å¼€çš„æ—¥å¿—æ–‡ä»¶æè¿°ç¬¦
 ngx_uint_t              ngx_use_stderr = 1;
 
 
@@ -260,11 +260,11 @@ ngx_log_stderr(ngx_err_t err, const char *fmt, ...)
 {
     u_char   *p, *last;
     va_list   args;
-    u_char    errstr[NGX_MAX_ERROR_STR];  //2kµÄÊý×é
+    u_char    errstr[NGX_MAX_ERROR_STR];  //2kçš„æ•°ç»„
 
-    last = errstr + NGX_MAX_ERROR_STR;  //Êý×éÎ²Ö¸Õë
+    last = errstr + NGX_MAX_ERROR_STR;  //æ•°ç»„å°¾æŒ‡é’ˆ
 
-    p = ngx_cpymem(errstr, "nginx: ", 7); // ngx_cpymem¿½±´Íêºó£¬Ö¸ÕëÖ¸ÏòÐÂ×Ö·û´®Ö®ºóµÄµØÖ·
+    p = ngx_cpymem(errstr, "nginx: ", 7); // ngx_cpymemæ‹·è´å®ŒåŽï¼ŒæŒ‡é’ˆæŒ‡å‘æ–°å­—ç¬¦ä¸²ä¹‹åŽçš„åœ°å€
 
     va_start(args, fmt);
     p = ngx_vslprintf(p, last, fmt, args);
@@ -315,11 +315,11 @@ ngx_log_errno(u_char *buf, u_char *last, ngx_err_t err)
 
 
 /*
-	ÈÕÖ¾ÃûÊÇ¹Ì¶¨µÄÃû×Ölogs/error.log
-	Õâ¸öº¯ÊýÊµÏÖÓÐµã»ìÂÒ
-	1. Ê×ÏÈÊ¹ÓÃºê¶¨ÒåËÀÁËÈÕÖ¾ÎÄ¼þµÄÃû³Æ£¬logs/error.log
-	2. ´úÂëÆäÊµÖ§³Ö¶îÍâ¶¨ÒåµÄÈÕÖ¾Ãû³Æ£¬¶øÇÒÈç¹ûÃû³ÆÊÇÈ«Â·¾¶ÔòÊ¹ÓÃÈ«Â·¾¶£¬
-	   Èç¹ûÊÇÏà¶ÔÂ·¾¶ÔòÇ°Ãæ×·¼Ó-pµÄÂ·¾¶»òÕßÊ¹ÓÃÄ¬ÈÏprefix
+	æ—¥å¿—åæ˜¯å›ºå®šçš„åå­—logs/error.log
+	è¿™ä¸ªå‡½æ•°å®žçŽ°æœ‰ç‚¹æ··ä¹±
+	1. é¦–å…ˆä½¿ç”¨å®å®šä¹‰æ­»äº†æ—¥å¿—æ–‡ä»¶çš„åç§°ï¼Œlogs/error.log
+	2. ä»£ç å…¶å®žæ”¯æŒé¢å¤–å®šä¹‰çš„æ—¥å¿—åç§°ï¼Œè€Œä¸”å¦‚æžœåç§°æ˜¯å…¨è·¯å¾„åˆ™ä½¿ç”¨å…¨è·¯å¾„ï¼Œ
+	   å¦‚æžœæ˜¯ç›¸å¯¹è·¯å¾„åˆ™å‰é¢è¿½åŠ -pçš„è·¯å¾„æˆ–è€…ä½¿ç”¨é»˜è®¤prefix
 	
 */
 
@@ -329,10 +329,10 @@ ngx_log_init(u_char *prefix)
     u_char  *p, *name;
     size_t   nlen, plen;
 
-    ngx_log.file = &ngx_log_file;
-    ngx_log.log_level = NGX_LOG_NOTICE;  //Ä¬ÈÏ¼¶±ðÎªÍ¨Öª
+    ngx_l og.file = &ngx_log_file;
+    ngx_log.log_level = NGX_LOG_NOTICE;  //é»˜è®¤çº§åˆ«ä¸ºé€šçŸ¥
 
-    name = (u_char *) NGX_ERROR_LOG_PATH; //ÈÕÖ¾Ãû³Æ
+    name = (u_char *) NGX_ERROR_LOG_PATH; //æ—¥å¿—åç§°
 
     /*
      * we use ngx_strlen() here since BCC warns about
@@ -342,7 +342,7 @@ ngx_log_init(u_char *prefix)
     nlen = ngx_strlen(name);
 
     if (nlen == 0) {
-        ngx_log_file.fd = ngx_stderr; //Ã»ÓÐÃû³ÆµÄ»°£¬Êä³öµ½±ê×¼³ö´í
+        ngx_log_file.fd = ngx_stderr; //æ²¡æœ‰åç§°çš„è¯ï¼Œè¾“å‡ºåˆ°æ ‡å‡†å‡ºé”™
         return &ngx_log;
     }
 
@@ -351,10 +351,10 @@ ngx_log_init(u_char *prefix)
 #if (NGX_WIN32)
     if (name[1] != ':') {
 #else
-    if (name[0] != '/') { //²»ÒÔ/¿ªÍ·ËµÃ÷²»ÊÇÈ«Â·¾¶
+    if (name[0] != '/') { //ä¸ä»¥/å¼€å¤´è¯´æ˜Žä¸æ˜¯å…¨è·¯å¾„
 #endif
 
-        if (prefix) { //ÊÇ·ñÖ¸¶¨ÁËprefix£¬Ã»ÓÐÖ¸¶¨¾ÍÓÃÄ¬ÈÏµÄ
+        if (prefix) { //æ˜¯å¦æŒ‡å®šäº†prefixï¼Œæ²¡æœ‰æŒ‡å®šå°±ç”¨é»˜è®¤çš„
             plen = ngx_strlen(prefix);
 
         } else {
@@ -367,26 +367,26 @@ ngx_log_init(u_char *prefix)
         }
 
         if (plen) {
-            name = malloc(plen + nlen + 2); //Îªname·ÖÅäÈ«Â·¾¶¿´¿Õ¼ä£¬perfix+name
+            name = malloc(plen + nlen + 2); //ä¸ºnameåˆ†é…å…¨è·¯å¾„çœ‹ç©ºé—´ï¼Œperfix+name
             if (name == NULL) {
                 return NULL;
             }
 
-            p = ngx_cpymem(name, prefix, plen); //prefix¸´ÖÆµ½name£¬·µ»Øµ±Ç°ÓÎ±ê£¬Ö¸ÏòÏÂÒ»¸ö
+            p = ngx_cpymem(name, prefix, plen); //prefixå¤åˆ¶åˆ°nameï¼Œè¿”å›žå½“å‰æ¸¸æ ‡ï¼ŒæŒ‡å‘ä¸‹ä¸€ä¸ª
 
-            if (!ngx_path_separator(*(p - 1))) { //Èç¹ûÄ©Î²Ã»ÓÐ/¾Í¼ÓÉÏ
+            if (!ngx_path_separator(*(p - 1))) { //å¦‚æžœæœ«å°¾æ²¡æœ‰/å°±åŠ ä¸Š
                 *p++ = '/';
             }
 
-            ngx_cpystrn(p, (u_char *) NGX_ERROR_LOG_PATH, nlen + 1); //name = prefix+err log path ÔÙ°ÑÏà¶ÔÂ·¾¶¸´ÖÆ¹ýÈ¥¾ÍÊÇÈ«Â·¾¶ÃûÁË
+            ngx_cpystrn(p, (u_char *) NGX_ERROR_LOG_PATH, nlen + 1); //name = prefix+err log path å†æŠŠç›¸å¯¹è·¯å¾„å¤åˆ¶è¿‡åŽ»å°±æ˜¯å…¨è·¯å¾„åäº†
 
-            p = name; //p È«Â·¾¶
+            p = name; //p å…¨è·¯å¾„
         }
     }
 
     ngx_log_file.fd = ngx_open_file(name, NGX_FILE_APPEND,
                                     NGX_FILE_CREATE_OR_OPEN,
-                                    NGX_FILE_DEFAULT_ACCESS);  //´ò¿ªÈÕÖ¾ÎÄ¼þ
+                                    NGX_FILE_DEFAULT_ACCESS);  //æ‰“å¼€æ—¥å¿—æ–‡ä»¶
 
     if (ngx_log_file.fd == NGX_INVALID_FILE) {
         ngx_log_stderr(ngx_errno,
@@ -398,11 +398,11 @@ ngx_log_init(u_char *prefix)
                        ngx_open_file_n " \"%s\" failed", name);
 #endif
 
-        ngx_log_file.fd = ngx_stderr; //Èç¹û´ò¿ªÈÕÖ¾ÎÄ¼þÊ§°ÜµÄ»°£¬ÈÕÖ¾ÎÄ¼þÎª±ê×¼³ö´í
+        ngx_log_file.fd = ngx_stderr; //å¦‚æžœæ‰“å¼€æ—¥å¿—æ–‡ä»¶å¤±è´¥çš„è¯ï¼Œæ—¥å¿—æ–‡ä»¶ä¸ºæ ‡å‡†å‡ºé”™
     }
 
     if (p) {
-        ngx_free(p); //ÊÍ·ÅµôÃû×Ö£¬ ÎÄ¼þ´ò¿ªÁË£¬°ÑÎÄ¼þÃûµÄ¿Õ¼äÊÍ·Åµô£¬²¢Ã»ÓÐ±£´æ£¬¿ÉÄÜÏÂ´Î´ò¿ª»¹ÒªÖØÐÂ¼ÆËãÃû×Ö
+        ngx_free(p); //é‡Šæ”¾æŽ‰åå­—ï¼Œ æ–‡ä»¶æ‰“å¼€äº†ï¼ŒæŠŠæ–‡ä»¶åçš„ç©ºé—´é‡Šæ”¾æŽ‰ï¼Œå¹¶æ²¡æœ‰ä¿å­˜ï¼Œå¯èƒ½ä¸‹æ¬¡æ‰“å¼€è¿˜è¦é‡æ–°è®¡ç®—åå­—
     }
 
     return &ngx_log;
@@ -434,7 +434,7 @@ ngx_log_open_default(ngx_cycle_t *cycle)
 
     log->log_level = NGX_LOG_ERR;
 
-    log->file = ngx_conf_open_file(cycle, &error_log); //´´½¨ÆäÒ»¸öerrorlog
+    log->file = ngx_conf_open_file(cycle, &error_log); //åˆ›å»ºå…¶ä¸€ä¸ªerrorlog
     if (log->file == NULL) {
         return NGX_ERROR;
     }
@@ -447,7 +447,7 @@ ngx_log_open_default(ngx_cycle_t *cycle)
 }
 
 /*
-	°Ñ´íÎóÈ«²¿Ð´ÈëÈÕÖ¾
+	æŠŠé”™è¯¯å…¨éƒ¨å†™å…¥æ—¥å¿—
 */
 ngx_int_t
 ngx_log_redirect_stderr(ngx_cycle_t *cycle)
@@ -651,7 +651,7 @@ ngx_log_set_log(ngx_conf_t *cf, ngx_log_t **head)
 
 #else
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "nginx was built without debug support");  //·ÇdebugÄ£Ê½£¬²»ÄÜÊ¹ÓÃmemory buffer
+                           "nginx was built without debug support");  //éždebugæ¨¡å¼ï¼Œä¸èƒ½ä½¿ç”¨memory buffer
         return NGX_CONF_ERROR;
 #endif
 
@@ -669,7 +669,7 @@ ngx_log_set_log(ngx_conf_t *cf, ngx_log_t **head)
         new_log->wdata = peer;
 
     } else {
-        new_log->file = ngx_conf_open_file(cf->cycle, &value[1]);  //------------------------------------------->Ö¸¶¨ÅäÖÃÎÄ¼þ
+        new_log->file = ngx_conf_open_file(cf->cycle, &value[1]);  //------------------------------------------->æŒ‡å®šé…ç½®æ–‡ä»¶
         if (new_log->file == NULL) {
             return NGX_CONF_ERROR;
         }

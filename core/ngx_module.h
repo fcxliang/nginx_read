@@ -218,10 +218,10 @@
 
 #define NGX_MODULE_V1_PADDING  0, 0, 0, 0, 0, 0, 0, 0
 
-// nginx Ä£¿é½á¹¹
+// nginx æ¨¡å—ç»“æ„
 struct ngx_module_s {
-    ngx_uint_t            ctx_index;  //ÔÚ´óÀàĞÍÄ£¿éÊı×éÀïµÄĞòºÅ
-    ngx_uint_t            index;      //ÔÚËùÓĞÄ£¿éÀïµÄĞòºÅ
+    ngx_uint_t            ctx_index;  //åœ¨å¤§ç±»å‹æ¨¡å—æ•°ç»„é‡Œçš„åºå·
+    ngx_uint_t            index;      //åœ¨æ‰€æœ‰æ¨¡å—é‡Œçš„åºå·
 
     char                 *name;
 
@@ -229,19 +229,19 @@ struct ngx_module_s {
     ngx_uint_t            spare1;
 
     ngx_uint_t            version;
-    const char           *signature; //Ä£¿éµÄÇ©Ãû£¬ NGX_MODULE_SIGNATURE ¶¨Òå£¬±£Ö¤¶¯Ì¬Ä£¿éµÄ¼æÈİĞÔ
+    const char           *signature; //æ¨¡å—çš„ç­¾åï¼Œ NGX_MODULE_SIGNATURE å®šä¹‰ï¼Œä¿è¯åŠ¨æ€æ¨¡å—çš„å…¼å®¹æ€§
 
-    void                 *ctx;  //Ã¿¸öÄ£¿éµÄ´¦Àíº¯Êı£¬Ã¿¸öÄ£¿é¶¼²»Ò»Ñù
-    ngx_command_t        *commands; //´¦Àí±¾Ä£¿éµÄÃüÁîµÄÊı×é
-    ngx_uint_t            type;  //Ä£¿éÀàĞÍ±ÈÈç£¬NGX_EVENT_MODULE NGX_CONF_MODULE,NGX_CORE_MODULE, HTTP, STREAM, MAIL
+    void                 *ctx;  //æ¯ä¸ªæ¨¡å—çš„å¤„ç†å‡½æ•°ï¼Œæ¯ä¸ªæ¨¡å—éƒ½ä¸ä¸€æ ·
+    ngx_command_t        *commands; //å¤„ç†æœ¬æ¨¡å—çš„å‘½ä»¤çš„æ•°ç»„
+    ngx_uint_t            type;  //æ¨¡å—ç±»å‹æ¯”å¦‚ï¼ŒNGX_EVENT_MODULE NGX_CONF_MODULE,NGX_CORE_MODULE, HTTP, STREAM, MAIL
 
-    ngx_int_t           (*init_master)(ngx_log_t *log);  //Ä¿Ç°Ã»ÓĞÊ¹ÓÃ
+    ngx_int_t           (*init_master)(ngx_log_t *log);  //ç›®å‰æ²¡æœ‰ä½¿ç”¨
 
     ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
 
     ngx_int_t           (*init_process)(ngx_cycle_t *cycle);
-    ngx_int_t           (*init_thread)(ngx_cycle_t *cycle);  //Ä¿Ç°Ã»ÓĞÊ¹ÓÃ
-    void                (*exit_thread)(ngx_cycle_t *cycle);  //Ä¿Ç°Ã»ÓĞÊ¹ÓÃ
+    ngx_int_t           (*init_thread)(ngx_cycle_t *cycle);  //ç›®å‰æ²¡æœ‰ä½¿ç”¨
+    void                (*exit_thread)(ngx_cycle_t *cycle);  //ç›®å‰æ²¡æœ‰ä½¿ç”¨
     void                (*exit_process)(ngx_cycle_t *cycle);
 
     void                (*exit_master)(ngx_cycle_t *cycle);

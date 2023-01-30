@@ -18,8 +18,8 @@ static ngx_uint_t ngx_module_ctx_index(ngx_cycle_t *cycle, ngx_uint_t type,
     ngx_uint_t index);
 
 
-ngx_uint_t         ngx_max_module; //���ģ������
-static ngx_uint_t  ngx_modules_n;  //����ģ������
+ngx_uint_t         ngx_max_module; //最大模块数量
+static ngx_uint_t  ngx_modules_n;  //现有模块数量
 
 
 ngx_int_t
@@ -54,7 +54,7 @@ ngx_cycle_modules(ngx_cycle_t *cycle)
     }
 
     ngx_memcpy(cycle->modules, ngx_modules,
-               ngx_modules_n * sizeof(ngx_module_t *));  //��ģ�鿼��cycle->modules
+               ngx_modules_n * sizeof(ngx_module_t *));  //把模块考入cycle->modules
 
     cycle->modules_n = ngx_modules_n;
 
@@ -97,11 +97,11 @@ ngx_count_modules(ngx_cycle_t *cycle, ngx_uint_t type)
             continue;
         }
 
-        if (module->ctx_index != NGX_MODULE_UNSET_INDEX) {  //�����Ѿ�������������
+        if (module->ctx_index != NGX_MODULE_UNSET_INDEX) {  //对于已经设置了索引的
 
             /* if ctx_index was assigned, preserve it */
 
-            if (module->ctx_index > max) {  //�ҵ��������
+            if (module->ctx_index > max) {  //找到最大索引
                 max = module->ctx_index;
             }
 
@@ -314,7 +314,7 @@ again:
     return index;
 }
 
-// �ҵ����е�ctx����
+// 找到空闲的ctx索引
 static ngx_uint_t
 ngx_module_ctx_index(ngx_cycle_t *cycle, ngx_uint_t type, ngx_uint_t index)
 {
@@ -328,11 +328,11 @@ again:
     for (i = 0; cycle->modules[i]; i++) {
         module = cycle->modules[i];
 
-        if (module->type != type) {  //�ҵ�ͬ����
+        if (module->type != type) {  //找到同类型
             continue;
         }
 
-        if (module->ctx_index == index) { //index��ռ���ˣ�������һ��index����Ҫ�ٴ�ͷ��ʼ��ֱ���ҵ�index
+        if (module->ctx_index == index) { //index被占用了，测试下一个index，需要再从头开始，直到找到index
             index++;
             goto again;
         }
@@ -340,7 +340,7 @@ again:
 
     /* check previous cycle */
 
-    if (cycle->old_cycle && cycle->old_cycle->modules) { //���ÿ�һ���Ƿ��ھɵ������ﱻռ���ˣ�����ǵĻ�Ҳ�ô�ͷ������һ��index
+    if (cycle->old_cycle && cycle->old_cycle->modules) { //还得看一下是否在旧的配置里被占用了，如果是的话也得从头测试下一个index
 
         for (i = 0; cycle->old_cycle->modules[i]; i++) {
             module = cycle->old_cycle->modules[i];
@@ -356,7 +356,7 @@ again:
         }
     }
 
-	//���Բ����¾�ģ�飬ʹ�õ�ͬһ�������ռ䡣���ǲ�ͬtype��ģ���Ƕ����������ռ�
+	//所以不管新旧模块，使用的同一个索引空间。但是不同type的模块是独立的索引空间
 
     return index;
 }
