@@ -16,17 +16,18 @@
 
 typedef struct ngx_http_upstream_rr_peer_s   ngx_http_upstream_rr_peer_t;
 
+//IP地址列表
 struct ngx_http_upstream_rr_peer_s {
-    struct sockaddr                *sockaddr;
+    struct sockaddr                *sockaddr; //可连接的一个IP地址
     socklen_t                       socklen;
-    ngx_str_t                       name;
-    ngx_str_t                       server;
+    ngx_str_t                       name;  // 地址的名字
+    ngx_str_t                       server;  //服务器名字
 
     ngx_int_t                       current_weight;
     ngx_int_t                       effective_weight;
     ngx_int_t                       weight;
 
-    ngx_uint_t                      conns;
+    ngx_uint_t                      conns;  // 活跃连接数
     ngx_uint_t                      max_conns;
 
     ngx_uint_t                      fails;
@@ -53,7 +54,7 @@ struct ngx_http_upstream_rr_peer_s {
     ngx_atomic_t                    lock;
 #endif
 
-    ngx_http_upstream_rr_peer_t    *next;  //��һ��peer
+    ngx_http_upstream_rr_peer_t    *next;  //下一个peer
 
     NGX_COMPAT_BEGIN(32)
     NGX_COMPAT_END
@@ -63,7 +64,7 @@ struct ngx_http_upstream_rr_peer_s {
 typedef struct ngx_http_upstream_rr_peers_s  ngx_http_upstream_rr_peers_t;
 
 struct ngx_http_upstream_rr_peers_s {
-    ngx_uint_t                      number;
+    ngx_uint_t                      number; // 成员数量 
 
 #if (NGX_HTTP_UPSTREAM_ZONE)
     ngx_slab_pool_t                *shpool;
@@ -73,14 +74,14 @@ struct ngx_http_upstream_rr_peers_s {
 
     ngx_uint_t                      total_weight;
 
-    unsigned                        single:1;
+    unsigned                        single:1;  //是否只有一个成员
     unsigned                        weighted:1;
 
-    ngx_str_t                      *name;
+    ngx_str_t                      *name; //upstream块的名字
 
-    ngx_http_upstream_rr_peers_t   *next;
+    ngx_http_upstream_rr_peers_t   *next;  //备server列表
 
-    ngx_http_upstream_rr_peer_t    *peer; //peer�б�
+    ngx_http_upstream_rr_peer_t    *peer; //主server列表
 };
 
 

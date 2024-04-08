@@ -129,7 +129,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module); //取得core模块的配置
 
     ngx_start_worker_processes(cycle, ccf->worker_processes,
-                               NGX_PROCESS_RESPAWN);
+                               NGX_PROCESS_RESPAWN);  //启动work_processes个进程
     ngx_start_cache_manager_processes(cycle, 0);
 
     ngx_new_binary = 0;
@@ -347,6 +347,7 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
 
     for (i = 0; i < n; i++) { //生成n个worker进程
 
+        // ngx_worker_process_cycle  worker进程主函数
         ngx_spawn_process(cycle, ngx_worker_process_cycle,
                           (void *) (intptr_t) i, "worker process", type);
 
@@ -769,7 +770,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data) // worker进程
 
 
 static void
-ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
+ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker) //worker， 进程在process数组中的索引
 {
     sigset_t          set;
     ngx_int_t         n;
@@ -815,8 +816,8 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
                           ccf->rlimit_core);
         }
     }
-
-    if (geteuid() == 0) { //有效用户id为0
+    //设置worker进程得执行权限
+    if (geteuid() == 0) { //有效用户id是否是0，即root， 因为只有root才有权限切换用户
         if (setgid(ccf->group) == -1) {  //设置组id
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "setgid(%d) failed", ccf->group);
@@ -871,7 +872,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     }
 
     if (worker >= 0) {
-        cpu_affinity = ngx_get_cpu_affinity(worker);  //设置CPU亲和性 0010 1000这些
+        cpu_affinity = ngx_get_cpu_affinity(worker);  //获取当前worker的cpu亲和设置
 
         if (cpu_affinity) {
             ngx_setaffinity(cpu_affinity, cycle->log);
@@ -888,7 +889,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     }
 
 #endif
-
+    // 设置工作路径
     if (ccf->working_directory.len) {
         if (chdir((char *) ccf->working_directory.data) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,

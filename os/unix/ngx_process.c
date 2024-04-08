@@ -98,7 +98,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     ngx_pid_t  pid;
     ngx_int_t  s;
 
-    if (respawn >= 0) {
+    if (respawn >= 0) { //主线流程进来此值位-3
         s = respawn;
 
     } else {

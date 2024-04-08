@@ -478,7 +478,7 @@ ngx_conf_bitmask_t  ngx_http_upstream_ignore_headers_masks[] = {
     { ngx_null_string, 0 }
 };
 
-// upstream���
+// upstream入口
 ngx_int_t
 ngx_http_upstream_create(ngx_http_request_t *r)
 {
@@ -6149,14 +6149,14 @@ ngx_http_upstream_snat_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
         return "address list error!";
     }
 
-    // �����ַ����
+    // 计算地址个数
     for (cur = 0; cur < len; cur ++) {
         if (paddrs[cur] == ',') {
             naddr ++;
         }
     }
 
-    naddr ++; //��Ϊ���һ��û�У�
+    naddr ++; //因为最后一个没有，
 
     snatpool = ngx_array_create(cf->pool, naddr, sizeof(ngx_http_upstream_local_t));
 	
@@ -6169,7 +6169,7 @@ ngx_http_upstream_snat_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
             unsigned char                  *paddr;
 
             addr_size = cur -start;
-            paddr = ngx_pcalloc(cf->pool, addr_size); //���볤��Ϊ�ַ������ȣ�����ҪΪ/0����ռ�
+            paddr = ngx_pcalloc(cf->pool, addr_size); //申请长度为字符串长度，不需要为/0申请空间
             if (paddr == NULL) {
                 return NGX_CONF_ERROR;
             }
@@ -6180,7 +6180,7 @@ ngx_http_upstream_snat_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
                 return NGX_CONF_ERROR;
             }
 
-            // ����ip��ַ�洢
+            // 申请ip地址存储
             local->addr = ngx_pcalloc(cf->pool, sizeof(ngx_addr_t));
             if (local->addr == NULL) {
                 return NGX_CONF_ERROR;
@@ -6214,7 +6214,7 @@ ngx_http_upstream_snat_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
     return NGX_CONF_OK;
 }
 
-//����Դ��ַ��Ŀǰ��������㷨
+//设置源地址，目前采用随机算法
 static ngx_int_t ngx_http_upstream_snat(ngx_http_request_t *r, ngx_http_upstream_t *u, ngx_array_t *snat_pool) {
 
     int chose = 0;
@@ -6250,33 +6250,33 @@ ngx_http_upstream_bind_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
     ngx_http_upstream_local_t         **plocal, *local;
     ngx_http_compile_complex_value_t    ccv;
 
-	//���õ�Ŀ��
+	//设置的目标
     plocal = (ngx_http_upstream_local_t **) (p + cmd->offset);  //ngx_http_proxy_loc_conf_t -> upstream -> *local
 
-    if (*plocal != NGX_CONF_UNSET_PTR) { //  plocal��������ֵ
+    if (*plocal != NGX_CONF_UNSET_PTR) { //  plocal不可能有值
         return "is duplicate";
     }
 
-    value = cf->args->elts; //��������
+    value = cf->args->elts; //参数数组
 
 	//proxy_bind  off
-    if (cf->args->nelts == 2 && ngx_strcmp(value[1].data, "off") == 0) { //������ֻʹ����2��Ԫ�أ��ҵڶ�����off
+    if (cf->args->nelts == 2 && ngx_strcmp(value[1].data, "off") == 0) { //数组里只使用了2个元素，且第二个是off
         *plocal = NULL;
         return NGX_CONF_OK;
     }
 
-	// ����off���������Ҫȡ��ip��ַ
+	// 不是off的情况，需要取出ip地址
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
     ccv.cf = cf;
     ccv.value = &value[1]; //off
     ccv.complex_value = &cv;
 
-    if (ngx_http_compile_complex_value(&ccv) != NGX_OK) { // ��������
+    if (ngx_http_compile_complex_value(&ccv) != NGX_OK) { // 解析变量
         return NGX_CONF_ERROR;
     }
 
-	//���ڴ�����local��
+	//现在创建起local来
     local = ngx_pcalloc(cf->pool, sizeof(ngx_http_upstream_local_t));
     if (local == NULL) {
         return NGX_CONF_ERROR;
@@ -6284,16 +6284,16 @@ ngx_http_upstream_bind_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
 
     *plocal = local;
 
-    if (cv.lengths) { //����������˱���
-        local->value = ngx_palloc(cf->pool, sizeof(ngx_http_complex_value_t)); //���븴��ֵ�洢�ռ�
+    if (cv.lengths) { //如果是引用了变量
+        local->value = ngx_palloc(cf->pool, sizeof(ngx_http_complex_value_t)); //申请复杂值存储空间
         if (local->value == NULL) {
             return NGX_CONF_ERROR;
         }
 
-        *local->value = cv; //�ѽ���ĸ���ֵ��ֵ��value
+        *local->value = cv; //把解出的复杂值赋值给value
 
     } else {
-    	//�����ĵ�ַ
+    	//单纯的地址
         local->addr = ngx_palloc(cf->pool, sizeof(ngx_addr_t));
         if (local->addr == NULL) {
             return NGX_CONF_ERROR;
@@ -6317,7 +6317,7 @@ ngx_http_upstream_bind_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
         }
     }
 
-    if (cf->args->nelts > 2) { //����ж������������Ļ������Ƿ���͸��
+    if (cf->args->nelts > 2) { //如果有多于两个参数的话，看是否是透传
         if (ngx_strcmp(value[2].data, "transparent") == 0) {
 #if (NGX_HAVE_TRANSPARENT_PROXY)
             ngx_core_conf_t  *ccf;

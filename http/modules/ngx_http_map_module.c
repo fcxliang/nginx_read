@@ -199,6 +199,7 @@ ngx_http_map_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                                           ngx_cacheline_size);
     }
 
+    // 申请map结构体空间
     map = ngx_pcalloc(cf->pool, sizeof(ngx_http_map_ctx_t));
     if (map == NULL) {
         return NGX_CONF_ERROR;
@@ -209,14 +210,14 @@ ngx_http_map_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
     ccv.cf = cf;
-    ccv.value = &value[1];
+    ccv.value = &value[1]; //map mapkey $mapvalue
     ccv.complex_value = &map->value;
 
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
 
-    name = value[2];
+    name = value[2]; // $mapvalue
 
     if (name.data[0] != '$') {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -225,14 +226,14 @@ ngx_http_map_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     name.len--;
-    name.data++;
+    name.data++;  //去掉$后的mapvalue
 
-    var = ngx_http_add_variable(cf, &name, NGX_HTTP_VAR_CHANGEABLE);
+    var = ngx_http_add_variable(cf, &name, NGX_HTTP_VAR_CHANGEABLE); //可变自定义变量
     if (var == NULL) {
         return NGX_CONF_ERROR;
     }
 
-    var->get_handler = ngx_http_map_variable;
+    var->get_handler = ngx_http_map_variable; //如何获取变量
     var->data = (uintptr_t) map;
 
     pool = ngx_create_pool(NGX_DEFAULT_POOL_SIZE, cf->log);
@@ -420,13 +421,13 @@ ngx_http_map(ngx_conf_t *cf, ngx_command_t *dummy, void *conf)
 
     key = 0;
 
-    for (i = 0; i < value[1].len; i++) {
+    for (i = 0; i < value[1].len; i++) { //计算值的hash key
         key = ngx_hash(key, value[1].data[i]);
     }
 
-    key %= ctx->keys.hsize;
+    key %= ctx->keys.hsize; //计算hashkey偏移
 
-    vp = ctx->values_hash[key].elts;
+    vp = ctx->values_hash[key].elts; //拿到所匹配key的所有值
 
     if (vp) {
         for (i = 0; i < ctx->values_hash[key].nelts; i++) {
@@ -435,23 +436,23 @@ ngx_http_map(ngx_conf_t *cf, ngx_command_t *dummy, void *conf)
                 data = vp[i]->data;
                 len = vp[i]->len;
 
-            } else {
+            } else { //不valid， 看来是complex
                 cvp = (ngx_http_complex_value_t *) vp[i]->data;
                 data = cvp->value.data;
                 len = cvp->value.len;
             }
 
-            if (value[1].len != len) {
+            if (value[1].len != len) { // 先快速比较下长度
                 continue;
             }
 
-            if (ngx_strncmp(value[1].data, data, len) == 0) {
+            if (ngx_strncmp(value[1].data, data, len) == 0) { // 比较内容
                 var = vp[i];
                 goto found;
             }
         }
 
-    } else {
+    } else { //没有内容，申请4个指针位置
         if (ngx_array_init(&ctx->values_hash[key], cf->pool, 4,
                            sizeof(ngx_http_variable_value_t *))
             != NGX_OK)

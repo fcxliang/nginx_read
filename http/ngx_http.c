@@ -322,7 +322,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
 
     *cf = pcf;
 
-
+    // 参数：配置文件，  core module 配置
     if (ngx_http_init_phase_handlers(cf, cmcf) != NGX_OK) {  // 初始化各个阶段的处理函数
         return NGX_CONF_ERROR;
     }

@@ -28,7 +28,7 @@ ngx_nonblocking(ngx_socket_t s)
 {
     int  nb;
 
-    nb = 1;  //·Ç×èÈû
+    nb = 1;  //éé˜»å¡
 
     return ioctl(s, FIONBIO, &nb);
 }
@@ -39,7 +39,7 @@ ngx_blocking(ngx_socket_t s)
 {
     int  nb;
 
-    nb = 0; //×èÈû
+    nb = 0; //é˜»å¡
 
     return ioctl(s, FIONBIO, &nb);
 }

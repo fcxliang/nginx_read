@@ -329,10 +329,10 @@ ngx_log_init(u_char *prefix)
     u_char  *p, *name;
     size_t   nlen, plen;
 
-    ngx_l og.file = &ngx_log_file;
+    ngx_log.file = &ngx_log_file;
     ngx_log.log_level = NGX_LOG_NOTICE;  //默认级别为通知
 
-    name = (u_char *) NGX_ERROR_LOG_PATH; //日志名称
+    name = (u_char *) NGX_ERROR_LOG_PATH; //日志名称, 可以通过configure参数改写
 
     /*
      * we use ngx_strlen() here since BCC warns about
@@ -359,7 +359,7 @@ ngx_log_init(u_char *prefix)
 
         } else {
 #ifdef NGX_PREFIX
-            prefix = (u_char *) NGX_PREFIX;
+            prefix = (u_char *) NGX_PREFIX; //默认prefix
             plen = ngx_strlen(prefix);
 #else
             plen = 0;
@@ -384,6 +384,7 @@ ngx_log_init(u_char *prefix)
         }
     }
 
+    //log路径全路径
     ngx_log_file.fd = ngx_open_file(name, NGX_FILE_APPEND,
                                     NGX_FILE_CREATE_OR_OPEN,
                                     NGX_FILE_DEFAULT_ACCESS);  //打开日志文件
@@ -461,7 +462,7 @@ ngx_log_redirect_stderr(ngx_cycle_t *cycle)
     /* file log always exists when we are called */
     fd = ngx_log_get_file_log(cycle->log)->file->fd;
 
-    if (fd != ngx_stderr) {
+    if (fd != ngx_stderr) { //不是标准出错的话，让标准出错指向这个文件
         if (ngx_set_stderr(fd) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           ngx_set_stderr_n " failed");

@@ -235,7 +235,7 @@ typedef struct {
 
     ngx_array_t                       cookies;
 
-    ngx_str_t                         server;
+    ngx_str_t                         server; //用于指定客户端期望的服务器软件名称和版本信息。然而，实际上，大多数客户端并不会在请求中发送 Server 头
     off_t                             content_length_n;
     time_t                            keep_alive_n;
 

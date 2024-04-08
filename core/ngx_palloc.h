@@ -47,19 +47,19 @@ struct ngx_pool_large_s {
 
 
 typedef struct {
-    u_char               *last; //poolʣ����ÿռ�ͷ��
-    u_char               *end;  //pool�ռ�ĵ�β��
-    ngx_pool_t           *next; //ָ����һ��pool
+    u_char               *last; //pool剩余可用空间头部
+    u_char               *end;  //pool空间的的尾部
+    ngx_pool_t           *next; //指向下一个pool
     ngx_uint_t            failed;
 } ngx_pool_data_t;
 
 
 struct ngx_pool_s {
     ngx_pool_data_t       d;
-    size_t                max;  //�����Դ�pool������Ŀռ��С
-    ngx_pool_t           *current; //��ǰpool
+    size_t                max;  //最大可以从pool中申请的空间大小
+    ngx_pool_t           *current; //当前pool
     ngx_chain_t          *chain;
-    ngx_pool_large_t     *large;  //��ռ�����������һ��pool���ܿռ䣩
+    ngx_pool_large_t     *large;  //大空间链表（大于一个pool的总空间）
     ngx_pool_cleanup_t   *cleanup;
     ngx_log_t            *log;
 };

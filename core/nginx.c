@@ -214,14 +214,14 @@ main(int argc, char *const *argv)
     if (ngx_show_version) {
         ngx_show_version_info(); //  nginx -h/v/V命令
 
-        if (!ngx_test_config) {
+        if (!ngx_test_config) { // -没有-t或者-T参数的话，设置了-t/-T的话则继续输出-t/-T内容
             return 0;
         }
     }
 
     /* TODO */ ngx_max_sockets = -1;
 
-    ngx_time_init();  // 初始化时间缓存，用于提高效率，避免加读锁
+    ngx_time_init();  // 初始化时间缓存，用于提高效率，避免加读锁，避免系统调用数量失控
 
 #if (NGX_PCRE)
     ngx_regex_init();

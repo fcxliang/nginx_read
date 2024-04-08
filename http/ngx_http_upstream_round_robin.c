@@ -49,7 +49,7 @@ ngx_http_upstream_init_round_robin(ngx_conf_t *cf,
         n = 0;
         w = 0;
 
-        for (i = 0; i < us->servers->nelts; i++) {
+        for (i = 0; i < us->servers->nelts; i++) { //éå†serversæ•°ç»„
             if (server[i].backup) {
                 continue;
             }
@@ -70,6 +70,7 @@ ngx_http_upstream_init_round_robin(ngx_conf_t *cf,
             return NGX_ERROR;
         }
 
+        // ç”³è¯·nä¸ªpeerç©ºé—´
         peer = ngx_pcalloc(cf->pool, sizeof(ngx_http_upstream_rr_peer_t) * n);
         if (peer == NULL) {
             return NGX_ERROR;
@@ -83,10 +84,10 @@ ngx_http_upstream_init_round_robin(ngx_conf_t *cf,
 
         n = 0;
         peerp = &peers->peer;
-
+        // æ„å»ºã€åˆå§‹åŒ–peeråˆ—è¡¨
         for (i = 0; i < us->servers->nelts; i++) {
             if (server[i].backup) {
-                continue;
+                continue; //è¿‡æ»¤æ‰backup
             }
 
             for (j = 0; j < server[i].naddrs; j++) {
@@ -110,20 +111,20 @@ ngx_http_upstream_init_round_robin(ngx_conf_t *cf,
                     peer[n].check_index = (ngx_uint_t) NGX_ERROR;
                 }
 #endif
-
+                //æŒ‚åˆ°peers->peeré“¾å°¾
                 *peerp = &peer[n];
                 peerp = &peer[n].next;
                 n++;
             }
         }
 
-        us->peer.data = peers;
+        us->peer.data = peers; //åŸæ¥peer.dataå°±æ˜¯peersï¼
 
         /* backup servers */
 
         n = 0;
         w = 0;
-
+        // è®¡ç®—backupæ€»çš„weight
         for (i = 0; i < us->servers->nelts; i++) {
             if (!server[i].backup) {
                 continue;
@@ -273,7 +274,7 @@ ngx_http_upstream_init_round_robin_peer(ngx_http_request_t *r,
     ngx_uint_t                         n;
     ngx_http_upstream_rr_peer_data_t  *rrp;
 
-    rrp = r->upstream->peer.data;
+    rrp = r->upstream->peer.data; // æ¯”å¦‚stickyçš„peer data
 
     if (rrp == NULL) {
         rrp = ngx_palloc(r->pool, sizeof(ngx_http_upstream_rr_peer_data_t));
@@ -290,7 +291,7 @@ ngx_http_upstream_init_round_robin_peer(ngx_http_request_t *r,
 
     n = rrp->peers->number;
 
-    if (rrp->peers->next && rrp->peers->next->number > n) {
+    if (rrp->peers->next && rrp->peers->next->number > n) { //ä¸‹ä¸€ä¸ªå…ƒç´ 
         n = rrp->peers->next->number;
     }
 
@@ -336,7 +337,8 @@ ngx_http_upstream_create_round_robin_peer(ngx_http_request_t *r,
 
     rrp = r->upstream->peer.data; //upstream data   ngx_http_upstream_rr_peer_data_t
 
-    if (rrp == NULL) { //Èç¹ûÃ»ÓĞrrp´´½¨Ò»¸ö
+    //requstä¸Šæ²¡æœ‰rrp
+    if (rrp == NULL) { //å¦‚æœæ²¡æœ‰rrpåˆ›å»ºä¸€ä¸ª
         rrp = ngx_palloc(r->pool, sizeof(ngx_http_upstream_rr_peer_data_t));
         if (rrp == NULL) {
             return NGX_ERROR;
@@ -345,25 +347,25 @@ ngx_http_upstream_create_round_robin_peer(ngx_http_request_t *r,
         r->upstream->peer.data = rrp;
     }
 
-    peers = ngx_pcalloc(r->pool, sizeof(ngx_http_upstream_rr_peers_t));  //´´½¨peers
+    peers = ngx_pcalloc(r->pool, sizeof(ngx_http_upstream_rr_peers_t));  //åˆ›å»ºpeers
     if (peers == NULL) {
         return NGX_ERROR;
     }
 
-    peer = ngx_pcalloc(r->pool, sizeof(ngx_http_upstream_rr_peer_t)  
+    peer = ngx_pcalloc(r->pool, sizeof(ngx_http_upstream_rr_peer_t)  // åˆ›å»ºnä¸ªpeerçš„æ•°ç»„
                                 * ur->naddrs);
     if (peer == NULL) {
         return NGX_ERROR;
     }
 
-    peers->single = (ur->naddrs == 1); //µ¥peer
-    peers->number = ur->naddrs; //peerÊıÁ¿
-    peers->name = &ur->host; // TODO:  ²»È·¶¨
+    peers->single = (ur->naddrs == 1); //å•peer
+    peers->number = ur->naddrs; //peeræ•°é‡
+    peers->name = &ur->host; // ï¼Ÿï¼Ÿç»™upstreamçš„åå­—èµ‹å€¼ï¼Ÿ
 
     if (ur->sockaddr) {
         peer[0].sockaddr = ur->sockaddr;
         peer[0].socklen = ur->socklen;
-        peer[0].name = ur->name.data ? ur->name : ur->host; //TODO: ¿ÉÄÜÊÇupstreamÃû³Æ»òÕßÊÇÒ»¸öÓòÃû?
+        peer[0].name = ur->name.data ? ur->name : ur->host; //TODO: å¯èƒ½æ˜¯upstreamåç§°æˆ–è€…æ˜¯ä¸€ä¸ªåŸŸå?
         peer[0].weight = 1;
         peer[0].effective_weight = 1;
         peer[0].current_weight = 0;
@@ -375,10 +377,10 @@ ngx_http_upstream_create_round_robin_peer(ngx_http_request_t *r,
 #endif
         peers->peer = peer;
 
-    } else {
+    } else { //æ²¡æœ‰ur->sockaddr
         peerp = &peers->peer;
 
-        for (i = 0; i < ur->naddrs; i++) {
+        for (i = 0; i < ur->naddrs; i++) { //dnsè§£å‡ºå¤šä¸ªIPåœ°å€ï¼Ÿæ¯ä¸ªIPä¸€ä¸ªpeer
 
             socklen = ur->addrs[i].socklen;
 
@@ -394,7 +396,7 @@ ngx_http_upstream_create_round_robin_peer(ngx_http_request_t *r,
             if (p == NULL) {
                 return NGX_ERROR;
             }
-
+            // pè¿”å›ip:portæˆ–è€…IPï¼Œæ”¯æŒv6
             len = ngx_sock_ntop(sockaddr, socklen, p, NGX_SOCKADDR_STRLEN, 1);
 
             peer[i].sockaddr = sockaddr;
@@ -419,12 +421,12 @@ ngx_http_upstream_create_round_robin_peer(ngx_http_request_t *r,
     rrp->current = NULL;
     rrp->config = 0;
 
-    if (rrp->peers->number <= 8 * sizeof(uintptr_t)) { //64 on 64bits os£¬ ¿´ÆğÀ´ÊÇÒ»×é8¸ö
+    if (rrp->peers->number <= 8 * sizeof(uintptr_t)) { //64 on 64bits osï¼Œ çœ‹èµ·æ¥æ˜¯ä¸€ç»„8ä¸ª
         rrp->tried = &rrp->data;
         rrp->data = 0;
 
     } else { // > 64
-        n = (rrp->peers->number + (8 * sizeof(uintptr_t) - 1)) // Ëã³öĞèÒª¼¸×éÖ¸Õë
+        n = (rrp->peers->number + (8 * sizeof(uintptr_t) - 1)) // ç®—å‡ºéœ€è¦å‡ ç»„æŒ‡é’ˆ
                 / (8 * sizeof(uintptr_t));
 
         rrp->tried = ngx_pcalloc(r->pool, n * sizeof(uintptr_t)); 
@@ -464,10 +466,10 @@ ngx_http_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
     peers = rrp->peers;
     ngx_http_upstream_rr_peers_wlock(peers);
 
-    if (peers->single) { //µ¥peer
+    if (peers->single) { //å•peer
         peer = peers->peer;
 
-        if (peer->down) { //ÊÇ·ñÊÇdownµÄ
+        if (peer->down) { //æ˜¯å¦æ˜¯downçš„
             goto failed;
         }
 
@@ -481,9 +483,9 @@ ngx_http_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
         }
 #endif
 
-        rrp->current = peer;  //Ñ¡ÖĞµÄpeer
+        rrp->current = peer;  //é€‰ä¸­çš„peer
 
-    } else { //¶àpeer£¬ĞèÒªround robin
+    } else { //å¤špeerï¼Œéœ€è¦round robin
 
         /* there are several peers */
 

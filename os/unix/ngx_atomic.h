@@ -107,7 +107,7 @@ typedef volatile ngx_atomic_uint_t  ngx_atomic_t;
 
 
 #define ngx_atomic_cmp_set(lock, old, set)                                    \
-    __sync_bool_compare_and_swap(lock, old, set)
+    __sync_bool_compare_and_swap(lock, old, set) //比较*lock和old，如果相等，则设置*lock=set，并返回true，否false
 
 #define ngx_atomic_fetch_add(value, add)                                      \
     __sync_fetch_and_add(value, add)
@@ -306,7 +306,7 @@ ngx_atomic_fetch_add(ngx_atomic_t *value, ngx_atomic_int_t add)
 
 void ngx_spinlock(ngx_atomic_t *lock, ngx_atomic_int_t value, ngx_uint_t spin);
 
-#define ngx_trylock(lock)  (*(lock) == 0 && ngx_atomic_cmp_set(lock, 0, 1))
+#define ngx_trylock(lock)  (*(lock) == 0 && ngx_atomic_cmp_set(lock, 0, 1)) //没有锁的话加锁，有锁的话就加不上锁了
 #define ngx_unlock(lock)    *(lock) = 0
 
 

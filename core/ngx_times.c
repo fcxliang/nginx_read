@@ -19,10 +19,10 @@ static ngx_msec_t ngx_monotonic_time(time_t sec, ngx_uint_t msec);
  * values and strings from the current slot.  Thus thread may get the corrupted
  * values only if it is preempted while copying and then it is not scheduled
  * to run more than NGX_TIME_SLOTS seconds.
- * Ê±¼ä»á±»Ò»Ğ©ĞÅºÅ´¦Àíº¯Êı»òÕß¶à¸öÏß³Ì¸üĞÂ
- * ¸üĞÂÊ±¼äµÄ²Ù×÷ĞèÒª³ÖÓĞngx_time_lock
- * Ê±¼äµÄ¶Á²Ù×÷¸üÎªÆµ·±£¬ËùÒÔËûÃÇÊÇÎŞËøµÄ£¬Ö±½Ó´Óµ±Ç°slotÖĞÈ¡µÃÊ±¼äÖµºÍ×Ö·û´®¡£
- * Òò´Ë£¬Ö»ÓĞ½øĞĞ¸´ÖÆÊ±Ïß³Ì±»ÇÀÕ¼£¬²Å¿ÉÄÜ»áÈ¡µ½ÒÑ¾­±»ÆÆ»·µÄÖµ£¬È»ºóËûÔÚNGX_TIME_SLOTSÃëÄÚ²»»á±»ÔÙ´Îµ÷¶È
+ * æ—¶é—´ä¼šè¢«ä¸€äº›ä¿¡å·å¤„ç†å‡½æ•°æˆ–è€…å¤šä¸ªçº¿ç¨‹æ›´æ–°
+ * æ›´æ–°æ—¶é—´çš„æ“ä½œéœ€è¦æŒæœ‰ngx_time_lock
+ * æ—¶é—´çš„è¯»æ“ä½œæ›´ä¸ºé¢‘ç¹ï¼Œæ‰€ä»¥ä»–ä»¬æ˜¯æ— é”çš„ï¼Œç›´æ¥ä»å½“å‰slotä¸­å–å¾—æ—¶é—´å€¼å’Œå­—ç¬¦ä¸²ã€‚
+ * å› æ­¤ï¼Œåªæœ‰è¿›è¡Œå¤åˆ¶æ—¶çº¿ç¨‹è¢«æŠ¢å ï¼Œæ‰å¯èƒ½ä¼šå–åˆ°å·²ç»è¢«ç ´ç¯çš„å€¼ï¼Œç„¶åä»–åœ¨NGX_TIME_SLOTSç§’å†…ä¸ä¼šè¢«å†æ¬¡è°ƒåº¦
  */
 
 #define NGX_TIME_SLOTS   64
@@ -30,13 +30,13 @@ static ngx_msec_t ngx_monotonic_time(time_t sec, ngx_uint_t msec);
 static ngx_uint_t        slot;
 static ngx_atomic_t      ngx_time_lock;
 
-volatile ngx_msec_t      ngx_current_msec;  //µ±Ç°Ê±¼ä
+volatile ngx_msec_t      ngx_current_msec;  //å½“å‰æ—¶é—´ï¼Œæ¯«ç§’
 volatile ngx_time_t     *ngx_cached_time;
-volatile ngx_str_t       ngx_cached_err_log_time;  //logËùÊ¹ÓÃµÄÊ±¼ä¸ñÊ½
-volatile ngx_str_t       ngx_cached_http_time;  //httpĞ­ÒéÖĞµÄÊ±¼ä¸ñÊ½
-volatile ngx_str_t       ngx_cached_http_log_time;  //access.logÖĞµÄÊ±¼ä¸ñÊ½
-volatile ngx_str_t       ngx_cached_http_log_iso8601; //http»º´ælogÊ±¼ä¸ñÊ½
-volatile ngx_str_t       ngx_cached_syslog_time;  //ÏµÍ³Ê±¼ä
+volatile ngx_str_t       ngx_cached_err_log_time;  //logæ‰€ä½¿ç”¨çš„æ—¶é—´æ ¼å¼
+volatile ngx_str_t       ngx_cached_http_time;  //httpåè®®ä¸­çš„æ—¶é—´æ ¼å¼
+volatile ngx_str_t       ngx_cached_http_log_time;  //access.logä¸­çš„æ—¶é—´æ ¼å¼
+volatile ngx_str_t       ngx_cached_http_log_iso8601; //httpç¼“å­˜logæ—¶é—´æ ¼å¼
+volatile ngx_str_t       ngx_cached_syslog_time;  //ç³»ç»Ÿæ—¶é—´
 
 #if !(NGX_WIN32)
 
@@ -44,13 +44,13 @@ volatile ngx_str_t       ngx_cached_syslog_time;  //ÏµÍ³Ê±¼ä
  * localtime() and localtime_r() are not Async-Signal-Safe functions, therefore,
  * they must not be called by a signal handler, so we use the cached
  * GMT offset value. Fortunately the value is changed only two times a year.
- * localtime²»¿ÉÖØÈë£¬Òò´Ë²»ÄÜÔÙĞÅºÅ´¦Àíº¯ÊıÖĞÓÃ¡£ËùÒÔÎÒÃÇÊ¹ÓÃ»º´æÏÂÀ´µÄGMTÆ«ÒÆÖµ¡£ĞÒÔËµÄÊÇ£¬Õâ¸öÖµÒ»Äê²Å±ä»¯Á½´Î
+ * localtimeä¸å¯é‡å…¥ï¼Œå› æ­¤ä¸èƒ½å†ä¿¡å·å¤„ç†å‡½æ•°ä¸­ç”¨ã€‚æ‰€ä»¥æˆ‘ä»¬ä½¿ç”¨ç¼“å­˜ä¸‹æ¥çš„GMTåç§»å€¼ã€‚å¹¸è¿çš„æ˜¯ï¼Œè¿™ä¸ªå€¼ä¸€å¹´æ‰å˜åŒ–ä¸¤æ¬¡
  */
 
 static ngx_int_t         cached_gmtoff;
 #endif
-//updateÊ±¼ä¼ÓËø£¬¶Á²»ÄÜ¼ÓËø£¬ËùÒÔÊ¹ÓÃÁËÏÂÃæµÄÑ­»·Êı×éÀ´×öÊ±¼ä»º´æ£¬Ğ´µÄÊ±ºò¿ªÆôĞÂµÄslot£¬¶Á»¹ÊÇ¶ÁÔ­À´µÄslot
-static ngx_time_t        cached_time[NGX_TIME_SLOTS];
+//updateæ—¶é—´åŠ é”ï¼Œè¯»ä¸èƒ½åŠ é”ï¼Œæ‰€ä»¥ä½¿ç”¨äº†ä¸‹é¢çš„å¾ªç¯æ•°ç»„æ¥åšæ—¶é—´ç¼“å­˜ï¼Œå†™çš„æ—¶å€™å¼€å¯æ–°çš„slotï¼Œè¯»è¿˜æ˜¯è¯»åŸæ¥çš„slot
+static ngx_time_t        cached_time[NGX_TIME_SLOTS]; //è¿™ä¸ªé‡Œé¢å­˜äº†æ¯«ç§’ï¼Œå…¶ä»–çš„éƒ½æ˜¯ç§’çº§
 static u_char            cached_err_log_time[NGX_TIME_SLOTS]
                                     [sizeof("1970/09/28 12:00:00")];
 static u_char            cached_http_time[NGX_TIME_SLOTS]
@@ -92,7 +92,7 @@ ngx_time_update(void)
     ngx_time_t      *tp;
     struct timeval   tv;
 
-    if (!ngx_trylock(&ngx_time_lock)) {
+    if (!ngx_trylock(&ngx_time_lock)) { //åŠ ä¸ä¸Šé”ï¼Œç›´æ¥é€€å‡º
         return;
     }
 
@@ -101,23 +101,23 @@ ngx_time_update(void)
     sec = tv.tv_sec;
     msec = tv.tv_usec / 1000;
 
-    ngx_current_msec = ngx_monotonic_time(sec, msec); //ºÁÃë
+    ngx_current_msec = ngx_monotonic_time(sec, msec); //æ¯«ç§’
 
-    tp = &cached_time[slot]; //È¡³öµ±Ç°slot
+    tp = &cached_time[slot]; //å–å‡ºå½“å‰slot
 
-    if (tp->sec == sec) {  //¿´µ±Ç°slotµÄÊ±¼äÓëµ±Ç°Ê±¼äÊÇ·ñÒ»ÖÂ£¬Èç¹ûÒ»ÖÂ¾ÍÓÃµ±Ç°Ê±¼ä£¬²»Ğ´ĞÂµÄslot
+    if (tp->sec == sec) {  //çœ‹å½“å‰slotçš„æ—¶é—´ä¸å½“å‰æ—¶é—´æ˜¯å¦ä¸€è‡´ï¼Œå¦‚æœä¸€è‡´å°±ç”¨å½“å‰æ—¶é—´ï¼Œä¸å†™æ–°çš„slot
         tp->msec = msec;
         ngx_unlock(&ngx_time_lock);
         return;
     }
 
-    if (slot == NGX_TIME_SLOTS - 1) {  //Èç¹ûslotÒÑ¾­ÂúÁË£¬×ªÈ¦»Øµ½Í·²¿¼ÌĞø
+    if (slot == NGX_TIME_SLOTS - 1) {  //å¦‚æœslotå·²ç»æ»¡äº†ï¼Œè½¬åœˆå›åˆ°å¤´éƒ¨ç»§ç»­
         slot = 0;
     } else {
-        slot++;  // Ã»Âú£¬slot×ÔÔö£¬Ğ´ÏÂÒ»¸öslot
+        slot++;  // æ²¡æ»¡ï¼Œslotè‡ªå¢ï¼Œå†™ä¸‹ä¸€ä¸ªslot
     }
 
-    tp = &cached_time[slot]; //È¡³öslot¶ÔÓ¦µÄ»º´æ£¬¸üĞÂÕâ¸ö»º´æÏîÄ¿
+    tp = &cached_time[slot]; //å–å‡ºslotå¯¹åº”çš„ç¼“å­˜ï¼Œæ›´æ–°è¿™ä¸ªç¼“å­˜é¡¹ç›®
 
     tp->sec = sec;
     tp->msec = msec;
@@ -125,7 +125,7 @@ ngx_time_update(void)
     ngx_gmtime(sec, &gmt);
 
 
-    p0 = &cached_http_time[slot][0]; //ÎªÊ²Ã´²»Ö±½ÓÈ¡ĞĞµØÖ· ¨r(¨s¨Œ¨t)¨q
+    p0 = &cached_http_time[slot][0]; //ä¸ºä»€ä¹ˆä¸ç›´æ¥å–è¡Œåœ°å€ â•®(â•¯â–½â•°)â•­
 
     (void) ngx_sprintf(p0, "%s, %02d %s %4d %02d:%02d:%02d GMT",
                        week[gmt.ngx_tm_wday], gmt.ngx_tm_mday,
@@ -151,7 +151,7 @@ ngx_time_update(void)
 
 #endif
 
-    //¸üĞÂ¸÷Â·»º´æ
+    //æ›´æ–°å„è·¯ç¼“å­˜
     p1 = &cached_err_log_time[slot][0];
 
     (void) ngx_sprintf(p1, "%4d/%02d/%02d %02d:%02d:%02d",

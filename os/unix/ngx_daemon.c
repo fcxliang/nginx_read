@@ -9,7 +9,7 @@
 #include <ngx_core.h>
 
 /*
-	ÒÔÊØ»¤½ø³ÌÆô¶¯
+	ä»¥å®ˆæŠ¤è¿›ç¨‹å¯åŠ¨
 */
 ngx_int_t
 ngx_daemon(ngx_log_t *log)
@@ -25,18 +25,18 @@ ngx_daemon(ngx_log_t *log)
         break;
 
     default:
-        exit(0); //Ö÷½ø³ÌÍË³ö
+        exit(0); //ä¸»è¿›ç¨‹é€€å‡º
     }
-    //×Ó½ø³Ì
-    ngx_parent = ngx_pid;
-    ngx_pid = ngx_getpid();
+    //å­è¿›ç¨‹
+    ngx_parent = ngx_pid; // ä»¥å‰çš„è¿›ç¨‹å˜æˆçˆ¶è¿›ç¨‹
+    ngx_pid = ngx_getpid(); //å½“å‰è¿›ç¨‹id
 
     if (setsid() == -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "setsid() failed");
         return NGX_ERROR;
     }
 
-    umask(0);
+    umask(0); // åˆ›å»ºæ–‡ä»¶æ¢å¤åˆ°
 
     fd = open("/dev/null", O_RDWR);
     if (fd == -1) {
@@ -45,7 +45,7 @@ ngx_daemon(ngx_log_t *log)
         return NGX_ERROR;
     }
 
-	//°Ñ±ê×¼ÊäÈëÊä³ö¶¼ÖØ¶¨Ïòµ½/dev/null
+	//æŠŠæ ‡å‡†è¾“å…¥è¾“å‡ºéƒ½é‡å®šå‘åˆ°/dev/null
     if (dup2(fd, STDIN_FILENO) == -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "dup2(STDIN) failed");
         return NGX_ERROR;

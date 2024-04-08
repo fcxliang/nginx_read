@@ -1,0 +1,29 @@
+{
+    "files.associations": {
+        "*.java": "java",
+        "*.py": "python",
+        "*.def": "c",
+        "*.tcc": "c",
+        "system_error": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "*.in": "c",
+        "typeinfo": "c",
+        "ngx_config.h": "c",
+        "ngx_event.h": "c",
+        "string.h": "c",
+        "stdio.h": "c",
+        "windows.h": "c",
+        "inet.h": "c",
+        "socket.h": "c",
+        "epoll.h": "c",
+        "ngx_core.h": "c",
+        "nginx.h": "c",
+        "ngx_http.h": "c",
+        "ngx_auto_headers.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}

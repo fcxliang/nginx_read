@@ -85,10 +85,10 @@ typedef ngx_int_t (*ngx_http_upstream_init_peer_pt)(ngx_http_request_t *r,
 
 
 typedef struct {
-    ngx_http_upstream_init_pt        init_upstream;
+    ngx_http_upstream_init_pt        init_upstream; //负载均衡算法
     ngx_http_upstream_init_peer_pt   init;
     void                            *data;
-} ngx_http_upstream_peer_t;
+} ngx_http_upstream_peer_t; // upstream server
 
 
 typedef struct {
@@ -118,7 +118,7 @@ typedef struct {
 #define NGX_HTTP_UPSTREAM_MAX_CONNS     0x0100
 
 
-struct ngx_http_upstream_srv_conf_s {
+struct ngx_http_upstream_srv_conf_s { //一个upstream配置
     ngx_http_upstream_peer_t         peer;
     void                           **srv_conf;
 
@@ -188,8 +188,8 @@ typedef struct {
     ngx_array_t                     *hide_headers;
     ngx_array_t                     *pass_headers;
 
-	ngx_array_t                     *snat_pool; // ��Ŷ��Դ��ַ
-    ngx_http_upstream_local_t       *local; //���صĵ�ַ
+	ngx_array_t                     *snat_pool; // ��Ŷ��Դ��ַ
+    ngx_http_upstream_local_t       *local; //���صĵ�ַ
     ngx_flag_t                       socket_keepalive;
 
 #if (NGX_HTTP_CACHE)
@@ -296,9 +296,9 @@ typedef struct {
     unsigned                         chunked:1;
 } ngx_http_upstream_headers_in_t;
 
-
+// 域名解析成的地址
 typedef struct {
-    ngx_str_t                        host;
+    ngx_str_t                        host;  //地址的名字
     in_port_t                        port;
     ngx_uint_t                       no_port; /* unsigned no_port:1 */
 

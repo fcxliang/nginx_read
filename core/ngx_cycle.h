@@ -85,7 +85,7 @@ struct ngx_cycle_s {
 
 
 typedef struct {
-    ngx_flag_t                daemon;
+    ngx_flag_t                daemon;  //默认是on的
     ngx_flag_t                master;  //是否启动worker进程
 
     ngx_msec_t                timer_resolution;

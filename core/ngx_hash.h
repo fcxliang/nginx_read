@@ -65,7 +65,7 @@ typedef struct {
 #define NGX_HASH_SMALL            1
 #define NGX_HASH_LARGE            2
 
-#define NGX_HASH_LARGE_ASIZE      16384
+#define NGX_HASH_LARGE_ASIZE      16384  //2^14
 #define NGX_HASH_LARGE_HSIZE      10007
 
 #define NGX_HASH_WILDCARD_KEY     1
