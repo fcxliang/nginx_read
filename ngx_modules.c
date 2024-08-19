@@ -2,7 +2,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-//这个c文件是configure的时候自动产生的，还有ngnx_auto_config.h和ngx_auto_header.h
+//杩欎釜c鏂囦欢鏄痗onfigure鐨勬椂鍊欒嚜鍔ㄤ骇鐢熺殑锛岃繕鏈塶gnx_auto_config.h鍜宯gx_auto_header.h
 
 extern ngx_module_t  ngx_core_module;
 extern ngx_module_t  ngx_errlog_module;

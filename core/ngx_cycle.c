@@ -229,7 +229,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
         module = cycle->modules[i]->ctx;
 
-        if (module->create_conf) { //返回的是： ngx_core_conf_t ccf
+        if (module->create_conf) { //返回的是： ngx_core_conf_t ccf 解析后的模块相关的配置结构体
             rv = module->create_conf(cycle); //<<--------------调用module的create_conf 例如       ngx_core_module_ctx 的 ngx_core_module_create_conf
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
@@ -239,6 +239,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
+    // 现在cycle->conf_ctx已经包含了主模块的create_conf结果
 	//-----------------解析配置文件----------------------
     senv = environ;
 
@@ -407,13 +408,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 	//---------------共享内存------------------------
     /* create shared memory */
 
-    part = &cycle->shared_memory.part;
+    part = &cycle->shared_memory.part; //共享内存链表头
     shm_zone = part->elts;
 
-    for (i = 0; /* void */ ; i++) {
+    for (i = 0; /* void */ ; i++) { //遍历链表
 
-        if (i >= part->nelts) {
-            if (part->next == NULL) {
+        if (i >= part->nelts) { //遍历完了数组，遍历下一个链表节点
+            if (part->next == NULL) { //到了链表尾了
                 break;
             }
             part = part->next;
@@ -430,6 +431,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
         shm_zone[i].shm.log = cycle->log;
 
+		//旧的共享内存也要挂回来，reload的情况
         opart = &old_cycle->shared_memory.part;
         oshm_zone = opart->elts;
 
@@ -443,7 +445,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                 oshm_zone = opart->elts;
                 n = 0;
             }
-
+			// 先比较名字
             if (shm_zone[i].shm.name.len != oshm_zone[n].shm.name.len) {
                 continue;
             }
@@ -455,7 +457,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             {
                 continue;
             }
-
+			// 名字一样再比较tag
             if (shm_zone[i].tag == oshm_zone[n].tag
                 && shm_zone[i].shm.size == oshm_zone[n].shm.size
                 && !shm_zone[i].noreuse)
@@ -465,7 +467,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                 shm_zone[i].shm.handle = oshm_zone[n].shm.handle;
 #endif
 
-                if (shm_zone[i].init(&shm_zone[i], oshm_zone[n].data)
+                if (shm_zone[i].init(&shm_zone[i], oshm_zone[n].data) //调用init函数，在模块初始化时通过ngx_shared_memory_add设置
                     != NGX_OK)
                 {
                     goto failed;
@@ -477,15 +479,16 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             break;
         }
 
+		// 没有旧的内存，新初始化内存，申请空间
         if (ngx_shm_alloc(&shm_zone[i].shm) != NGX_OK) {
             goto failed;
         }
 
-        if (ngx_init_zone_pool(cycle, &shm_zone[i]) != NGX_OK) {
+        if (ngx_init_zone_pool(cycle, &shm_zone[i]) != NGX_OK) { //使用slab管理
             goto failed;
         }
 
-        if (shm_zone[i].init(&shm_zone[i], NULL) != NGX_OK) {
+        if (shm_zone[i].init(&shm_zone[i], NULL) != NGX_OK) { //调用使用shm的模块的shm init函数
             goto failed;
         }
 
@@ -954,7 +957,8 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
     u_char           *file;
     ngx_slab_pool_t  *sp;
 
-    sp = (ngx_slab_pool_t *) zn->shm.addr;
+	//slab pool
+    sp = (ngx_slab_pool_t *) zn->shm.addr; //共享内存的开头是slab pool信息
 
     if (zn->shm.exists) {
 
@@ -985,10 +989,10 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
     }
 
     sp->end = zn->shm.addr + zn->shm.size;
-    sp->min_shift = 3;
+    sp->min_shift = 3; //2^3起 到 2^ngx_slab_exact_shift ?? 
     sp->addr = zn->shm.addr;
 
-#if (NGX_HAVE_ATOMIC_OPS)
+#if (NGX_HAVE_ATOMIC_OPS) //支持原子操作
 
     file = NULL;
 
@@ -1008,7 +1012,7 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
         return NGX_ERROR;
     }
 
-    ngx_slab_init(sp);
+    ngx_slab_init(sp); //使用slab管理
 
     return NGX_OK;
 }

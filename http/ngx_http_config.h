@@ -15,9 +15,9 @@
 
 
 typedef struct {
-    void        **main_conf;
-    void        **srv_conf;
-    void        **loc_conf;
+    void        **main_conf; //主配置 *main_conf[模块index]
+    void        **srv_conf;  //server块配置
+    void        **loc_conf;  //locaion块配置
 } ngx_http_conf_ctx_t;
 
 

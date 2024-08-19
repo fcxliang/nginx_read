@@ -34,7 +34,7 @@ typedef struct {
     ngx_upstream_check_packet_parse_pt  parse;
     ngx_upstream_check_packet_clean_pt  reinit;
 
-    unsigned need_pool;
+    unsigned need_pool;  //如果需要发送数据就需要pool，在ngx_check_types中设置
     unsigned need_keepalive;
 } ngx_check_conf_t;
 
@@ -44,14 +44,14 @@ struct ngx_upstream_check_srv_conf_s {
     ngx_uint_t                               rise_count;
     ngx_msec_t                               check_interval;
     ngx_msec_t                               check_timeout;
-    ngx_uint_t                               check_keepalive_requests;
+    ngx_uint_t                               check_keepalive_requests; //一个连接上最大req数
 
     ngx_check_conf_t                        *check_type_conf;
     ngx_str_t                                send;
 
     union {
         ngx_uint_t                           return_code;
-        ngx_uint_t                           status_alive;
+        ngx_uint_t                           status_alive; //被认为是存活的code
     } code;
     ngx_regex_t                             *expect_body_regex;
     ngx_array_t                             *fastcgi_params; //only for http module.
@@ -70,8 +70,8 @@ typedef struct {
 
     ngx_msec_t                               access_time;
 
-    ngx_uint_t                               fall_count;
-    ngx_uint_t                               rise_count;
+    ngx_uint_t                               fall_count; //成功次数
+    ngx_uint_t                               rise_count; //失败次数
 
     ngx_uint_t                               busyness;
     ngx_uint_t                               access_count;
@@ -105,8 +105,8 @@ struct ngx_upstream_check_peer_s {
     ngx_str_t                               *upstream_name;
     ngx_addr_t                              *check_peer_addr;
     ngx_addr_t                              *peer_addr;
-    ngx_event_t                              check_ev;
-    ngx_event_t                              check_timeout_ev;
+    ngx_event_t                              check_ev; // <------------------定时器到时
+    ngx_event_t                              check_timeout_ev; // <--------------------
     ngx_peer_connection_t                    pc;
 
     void                                    *check_data;
@@ -117,8 +117,8 @@ struct ngx_upstream_check_peer_s {
     ngx_upstream_check_packet_parse_pt  parse;
     ngx_upstream_check_packet_clean_pt  reinit;
 
-    ngx_upstream_check_peer_shm_t      *shm;
-    ngx_upstream_check_srv_conf_t      *conf;
+    ngx_upstream_check_peer_shm_t      *shm;  //检查状态
+    ngx_upstream_check_srv_conf_t      *conf; //检查配置
 };
 
 typedef struct {

@@ -231,7 +231,7 @@ struct ngx_module_s {
     ngx_uint_t            version;
     const char           *signature; //模块的签名， NGX_MODULE_SIGNATURE 定义，保证动态模块的兼容性
 
-    void                 *ctx;  //每个模块的处理函数，每个模块都不一样
+    void                 *ctx;  //每个模块的处理函数，每个模块都不一样，创建配置用的函数集合
     ngx_command_t        *commands; //处理本模块的命令的数组
     ngx_uint_t            type;  //模块类型比如，NGX_EVENT_MODULE NGX_CONF_MODULE,NGX_CORE_MODULE, HTTP, STREAM, MAIL
 

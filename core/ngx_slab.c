@@ -96,7 +96,7 @@ ngx_slab_sizes_init(void)
 
     ngx_slab_max_size = ngx_pagesize / 2;   //最大size是page的一半，2048
     ngx_slab_exact_size = ngx_pagesize / (8 * sizeof(uintptr_t));  //精确size，64字节，即最小64字节
-    for (n = ngx_slab_exact_size; n >>= 1; ngx_slab_exact_shift++) { //shift 6
+    for (n = ngx_slab_exact_size; n >>= 1; ngx_slab_exact_shift++) { //shift 6 最多6个分级 slot例如4k  也就是从6到12-1一共多个分级
         /* void */
     }
 }
@@ -111,17 +111,17 @@ ngx_slab_init(ngx_slab_pool_t *pool)
     ngx_uint_t        i, n, pages;
     ngx_slab_page_t  *slots, *page;
 
-    pool->min_size = (size_t) 1 << pool->min_shift;
+    pool->min_size = (size_t) 1 << pool->min_shift; //2^3
 
-    slots = ngx_slab_slots(pool);
+    slots = ngx_slab_slots(pool); //slab pool后面的内容
 
     p = (u_char *) slots;
-    size = pool->end - p;
+    size = pool->end - p;  //剩余空间
 
-    ngx_slab_junk(p, size);
+    ngx_slab_junk(p, size); //把后续空间初始化成0xA5
 
-    n = ngx_pagesize_shift - pool->min_shift;
-
+    n = ngx_pagesize_shift - pool->min_shift; //级数 12-3 = 9
+	//初始化9个slot
     for (i = 0; i < n; i++) {
         /* only "next" is used in list head */
         slots[i].slab = 0;
@@ -129,20 +129,26 @@ ngx_slab_init(ngx_slab_pool_t *pool)
         slots[i].prev = 0;
     }
 
-    p += n * sizeof(ngx_slab_page_t);
+    p += n * sizeof(ngx_slab_page_t); //跳到slot区域之后
 
+	//紧接着是9个stat
     pool->stats = (ngx_slab_stat_t *) p;
     ngx_memzero(pool->stats, n * sizeof(ngx_slab_stat_t));
 
-    p += n * sizeof(ngx_slab_stat_t);
+    p += n * sizeof(ngx_slab_stat_t); //跳到stat区域之后
 
     size -= n * (sizeof(ngx_slab_page_t) + sizeof(ngx_slab_stat_t));
 
+	//ngx_slab_pool_t|ngx_slab_page_t * 9|ngx_slab_stat_t * 9|
+
+	//计算剩下的还能容纳多少个page+ngx_slab_page_t的组合
     pages = (ngx_uint_t) (size / (ngx_pagesize + sizeof(ngx_slab_page_t)));
 
-    pool->pages = (ngx_slab_page_t *) p;
+	//slab_pages表
+    pool->pages = (ngx_slab_page_t *) p; //stat之后就是pages了 
     ngx_memzero(pool->pages, pages * sizeof(ngx_slab_page_t));
 
+	//开始初始化第一个slab page元素
     page = pool->pages;
 
     /* only "next" is used in list head */
@@ -154,10 +160,11 @@ ngx_slab_init(ngx_slab_pool_t *pool)
     page->next = &pool->free;
     page->prev = (uintptr_t) &pool->free;
 
-    pool->start = ngx_align_ptr(p + pages * sizeof(ngx_slab_page_t),
+	//实际存储，对齐到4k
+    pool->start = ngx_align_ptr(p + pages * sizeof(ngx_slab_page_t), //几个page就九个slabpage?
                                 ngx_pagesize);
 
-    m = pages - (pool->end - pool->start) / ngx_pagesize;
+    m = pages - (pool->end - pool->start) / ngx_pagesize; //slab表项数
     if (m > 0) {
         pages -= m;
         page->slab = pages;

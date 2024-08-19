@@ -78,7 +78,7 @@ ngx_init_modules(ngx_cycle_t *cycle)
     return NGX_OK;
 }
 
-
+//1. 为每个模块分配ctx_index 2. 返回最大索引
 ngx_int_t
 ngx_count_modules(ngx_cycle_t *cycle, ngx_uint_t type)
 {
@@ -109,12 +109,12 @@ ngx_count_modules(ngx_cycle_t *cycle, ngx_uint_t type)
                 next++;
             }
 
-            continue;
+            continue; //设置过的 略过
         }
 
         /* search for some free index */
 
-        module->ctx_index = ngx_module_ctx_index(cycle, type, next);
+        module->ctx_index = ngx_module_ctx_index(cycle, type, next); //分配一个空闲的index
 
         if (module->ctx_index > max) {
             max = module->ctx_index;
@@ -251,7 +251,7 @@ ngx_add_module(ngx_conf_t *cf, ngx_str_t *file, ngx_module_t *module,
     cf->cycle->modules[before] = module;
     cf->cycle->modules_n++;
 
-    if (module->type == NGX_CORE_MODULE) {
+    if (module->type == NGX_CORE_MODULE) { //执行 core模块的create conf
 
         /*
          * we are smart enough to initialize core modules;
@@ -328,7 +328,7 @@ again:
     for (i = 0; cycle->modules[i]; i++) {
         module = cycle->modules[i];
 
-        if (module->type != type) {  //找到同类型
+        if (module->type != type) {  //找到同类型, 例如NGX_HTTP_MODULE
             continue;
         }
 
@@ -338,6 +338,7 @@ again:
         }
     }
 
+	//到这的话index没有冲突，在看下在旧的cycle里有没有冲突
     /* check previous cycle */
 
     if (cycle->old_cycle && cycle->old_cycle->modules) { //还得看一下是否在旧的配置里被占用了，如果是的话也得从头测试下一个index

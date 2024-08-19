@@ -116,6 +116,7 @@ ngx_module_t  ngx_http_module = {
 };
 
 
+// http所有模块配置解析
 static char *
 ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} 指令
 {
@@ -123,7 +124,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
     ngx_uint_t                   mi, m, s;
     ngx_conf_t                   pcf;
     ngx_http_module_t           *module;
-    ngx_http_conf_ctx_t         *ctx;
+    ngx_http_conf_ctx_t         *ctx; // 存放解析后的配置
     ngx_http_core_loc_conf_t    *clcf;
     ngx_http_core_srv_conf_t   **cscfp;
     ngx_http_core_main_conf_t   *cmcf;
@@ -133,20 +134,21 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
     }
 
     /* the main http context */
-
+	//创建http 总的ctx
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t)); //申请一个http conf ctx
     if (ctx == NULL) {
         return NGX_CONF_ERROR;
     }
 
-    *(ngx_http_conf_ctx_t **) conf = ctx; //放到指针数组里
+    *(ngx_http_conf_ctx_t **) conf = ctx; //放到cycle->conf_ctx指针数组里
 
 
     /* count the number of the http modules and set up their indices */
 
-    ngx_http_max_module = ngx_count_modules(cf->cycle, NGX_HTTP_MODULE); //计算所有的http模块数量
+    ngx_http_max_module = ngx_count_modules(cf->cycle, NGX_HTTP_MODULE); //计算所有的http模块数量,及为每个模块分配ctx_idx
 
 
+	//为所有的http模块分配配置指针空间
     /* the http main_conf context, it is the same in the all http contexts */
 
     ctx->main_conf = ngx_pcalloc(cf->pool,
@@ -182,17 +184,17 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
      * create the main_conf's, the null srv_conf's, and the null loc_conf's
      * of the all http modules
      */
-    //调用各个模块的解析main srv location 的create conf函数
+    /***************************调用各个http模块的解析main srv location 的create conf函数 ************************/
     for (m = 0; cf->cycle->modules[m]; m++) {
         if (cf->cycle->modules[m]->type != NGX_HTTP_MODULE) {
             continue;
         }
 
-        module = cf->cycle->modules[m]->ctx;
+        module = cf->cycle->modules[m]->ctx; // 找到模块的ctx
         mi = cf->cycle->modules[m]->ctx_index;
 
         if (module->create_main_conf) {
-            ctx->main_conf[mi] = module->create_main_conf(cf);
+            ctx->main_conf[mi] = module->create_main_conf(cf); //调用每个http子模块的create_main_conf
             if (ctx->main_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
             }
@@ -212,10 +214,12 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
             }
         }
     }
-
+	/***********************************************************************************************/
+	//切换成http模块的ngx_http_conf_ctx_t
     pcf = *cf;
     cf->ctx = ctx;
 
+	//执行每个模块的preconfiguration
     for (m = 0; cf->cycle->modules[m]; m++) {
         if (cf->cycle->modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -230,10 +234,12 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
         }
     }
 
+	// 开始解析http{}
     /* parse inside the http{} block */
 
     cf->module_type = NGX_HTTP_MODULE;
     cf->cmd_type = NGX_HTTP_MAIN_CONF;
+	//读取配置命令，找到对应的模块，解析
     rv = ngx_conf_parse(cf, NULL);
 
     if (rv != NGX_CONF_OK) {
@@ -246,8 +252,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
      */
 
     cmcf = ctx->main_conf[ngx_http_core_module.ctx_index];
-    cscfp = cmcf->servers.elts;
+    cscfp = cmcf->servers.elts; //所有的server
 
+	//执行每个http模块的init_main_conf
     for (m = 0; cf->cycle->modules[m]; m++) {
         if (cf->cycle->modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -572,7 +579,7 @@ ngx_http_merge_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     saved = *ctx;
     rv = NGX_CONF_OK;
 
-    for (s = 0; s < cmcf->servers.nelts; s++) {
+    for (s = 0; s < cmcf->servers.nelts; s++) { //遍历所有server
 
         /* merge the server{}s' srv_conf's */
 
@@ -636,6 +643,7 @@ ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
     ctx = (ngx_http_conf_ctx_t *) cf->ctx;
     saved = *ctx;
 
+	// 遍历所有location
     for (q = ngx_queue_head(locations);
          q != ngx_queue_sentinel(locations);
          q = ngx_queue_next(q))
@@ -651,6 +659,7 @@ ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
             return rv;
         }
 
+		// 递归嵌套的location
         rv = ngx_http_merge_locations(cf, clcf->locations, clcf->loc_conf,
                                       module, ctx_index);
         if (rv != NGX_CONF_OK) {

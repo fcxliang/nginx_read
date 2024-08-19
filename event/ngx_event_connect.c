@@ -18,7 +18,7 @@ static ngx_int_t ngx_event_connect_set_transparent(ngx_peer_connection_t *pc,
 
 
 ngx_int_t
-ngx_event_connect_peer(ngx_peer_connection_t *pc) //���ӵ�peer
+ngx_event_connect_peer(ngx_peer_connection_t *pc) //连接到peer
 {
     int                rc, type, value;
 #if (NGX_HAVE_IP_BIND_ADDRESS_NO_PORT || NGX_LINUX)
@@ -50,7 +50,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc) //���ӵ�peer
     }
 
 
-    c = ngx_get_connection(s, pc->log);
+    c = ngx_get_connection(s, pc->log); //建立连接
 
     if (c == NULL) {
         if (ngx_close_socket(s) == -1) {
@@ -85,7 +85,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc) //���ӵ�peer
         }
     }
 
-    if (ngx_nonblocking(s) == -1) {
+    if (ngx_nonblocking(s) == -1) { //socket设置为非阻塞
         ngx_log_error(NGX_LOG_ALERT, pc->log, ngx_socket_errno,
                       ngx_nonblocking_n " failed");
 
@@ -106,6 +106,8 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc) //���ӵ�peer
         port = ngx_inet_get_port(pc->local->sockaddr);
 #endif
 
+//IP_BIND_ADDRESS_NO_PORT 的主要作用是允许套接字绑定到一个指定的 IP 地址，
+//而不绑定具体的端口号，从而推迟端口的分配，直到发起连接时才确定端口。
 #if (NGX_HAVE_IP_BIND_ADDRESS_NO_PORT)
 
         if (pc->sockaddr->sa_family != AF_UNIX && port == 0) {
@@ -133,6 +135,18 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc) //���ӵ�peer
 #endif
 
 #if (NGX_LINUX)
+/*
+	【重用本地地址】：
+	允许一个套接字绑定到一个已经在使用的本地地址和端口组合。
+	例如，当一个 TCP 连接在 TIME_WAIT 状态时，另一个套接字可以使用相同的地址和端口进行绑定，
+	而不会因为地址已在使用而失败。
+	【支持多个绑定】：
+	在多播或广播场景下，允许多个套接字绑定到同一个端口号。这在需要接收同一数据流的多个应用程序或线程中非常有用。
+	【服务重启时的便利】：
+	当服务器重启时，可能会有旧的连接处于 TIME_WAIT 状态
+	如果不使用 SO_REUSEADDR，服务器可能无法绑定到相同的端口，导致服务无法立即重新启动。
+	启用 SO_REUSEADDR 后，服务器可以立即重新绑定到同一端口，避免等待旧连接超时。
+*/
 
         if (pc->type == SOCK_DGRAM && port != 0) {
             int  reuse_addr = 1;
@@ -191,8 +205,9 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc) //���ӵ�peer
 
     pc->connection = c;
 
-    c->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
+    c->number = ngx_atomic_fetch_add(ngx_connection_counter, 1); //连接计数
 
+	//添加连接事件
     if (ngx_add_conn) {
         if (ngx_add_conn(c) == NGX_ERROR) {
             goto failed;
@@ -202,7 +217,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc) //���ӵ�peer
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, pc->log, 0,
                    "connect to %V, fd:%d #%uA", pc->name, s, c->number);
 
-    rc = connect(s, pc->sockaddr, pc->socklen);
+    rc = connect(s, pc->sockaddr, pc->socklen); //建立连接
 
     if (rc == -1) {
         err = ngx_socket_errno;
@@ -245,7 +260,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc) //���ӵ�peer
         }
     }
 
-    if (ngx_add_conn) {
+    if (ngx_add_conn) { //如果是事件模型就该退出了
         if (rc == -1) {
 
             /* NGX_EINPROGRESS */

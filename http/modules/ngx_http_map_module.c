@@ -9,13 +9,13 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-
+// map 的配置结构
 typedef struct {
     ngx_uint_t                  hash_max_size;
     ngx_uint_t                  hash_bucket_size;
 } ngx_http_map_conf_t;
 
-
+// 存储一个map的key hash与value hash ？
 typedef struct {
     ngx_hash_keys_arrays_t      keys;
 
@@ -124,14 +124,14 @@ ngx_http_map_variable(ngx_http_request_t *r, ngx_http_variable_value_t *v,
     if (map->hostnames && val.len > 0 && val.data[val.len - 1] == '.') {
         val.len--;
     }
-
+    // match = val, 拿value去查找map
     value = ngx_http_map_find(r, &map->map, &val);
 
     if (value == NULL) {
         value = map->default_value;
     }
 
-    if (!value->valid) {
+    if (!value->valid) { //还没取得复杂变量值
         cv = (ngx_http_complex_value_t *) value->data;
 
         if (ngx_http_complex_value(r, cv, &str) != NGX_OK) {
@@ -144,7 +144,7 @@ ngx_http_map_variable(ngx_http_request_t *r, ngx_http_variable_value_t *v,
         v->len = str.len;
         v->data = str.data;
 
-    } else {
+    } else { //已经取得复杂变量值
         *v = *value;
     }
 
@@ -175,7 +175,7 @@ ngx_http_map_create_conf(ngx_conf_t *cf)
 static char *
 ngx_http_map_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    ngx_http_map_conf_t  *mcf = conf;
+    ngx_http_map_conf_t  *mcf = conf; //map的配置结构
 
     char                              *rv;
     ngx_str_t                         *value, name;
@@ -183,7 +183,7 @@ ngx_http_map_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_pool_t                        *pool;
     ngx_hash_init_t                    hash;
     ngx_http_map_ctx_t                *map;
-    ngx_http_variable_t               *var;
+    ngx_http_variable_t               *var; //map的第二个参数，自定义变量
     ngx_http_map_conf_ctx_t            ctx;
     ngx_http_compile_complex_value_t   ccv;
 
@@ -210,14 +210,14 @@ ngx_http_map_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
     ccv.cf = cf;
-    ccv.value = &value[1]; //map mapkey $mapvalue
-    ccv.complex_value = &map->value;
+    ccv.value = &value[1]; //map mapkey $mapvalue中的mapkey
+    ccv.complex_value = &map->value; // 编译后的值存放
 
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
 
-    name = value[2]; // $mapvalue
+    name = value[2]; // $mapvalue 必须是一个变量
 
     if (name.data[0] != '$') {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -228,27 +228,31 @@ ngx_http_map_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     name.len--;
     name.data++;  //去掉$后的mapvalue
 
-    var = ngx_http_add_variable(cf, &name, NGX_HTTP_VAR_CHANGEABLE); //可变自定义变量
+	// 自定义变量
+    var = ngx_http_add_variable(cf, &name, NGX_HTTP_VAR_CHANGEABLE);
     if (var == NULL) {
         return NGX_CONF_ERROR;
     }
 
-    var->get_handler = ngx_http_map_variable; //如何获取变量
-    var->data = (uintptr_t) map;
+    var->get_handler = ngx_http_map_variable; //获取map变量值的函数
+    var->data = (uintptr_t) map;  //map的keyval对存储
 
-    pool = ngx_create_pool(NGX_DEFAULT_POOL_SIZE, cf->log);
+    pool = ngx_create_pool(NGX_DEFAULT_POOL_SIZE, cf->log); //16k的临时pool，用于？
     if (pool == NULL) {
         return NGX_CONF_ERROR;
     }
 
+	//构造ngx_http_map_conf_ctx_t
     ctx.keys.pool = cf->pool;
     ctx.keys.temp_pool = pool;
 
+	//初始化keys hash表
     if (ngx_hash_keys_array_init(&ctx.keys, NGX_HASH_LARGE) != NGX_OK) {
         ngx_destroy_pool(pool);
         return NGX_CONF_ERROR;
     }
 
+	// 申请values_hash数组，我理解value根本不需要hash表，复用key的hash即可
     ctx.values_hash = ngx_pcalloc(pool, sizeof(ngx_array_t) * ctx.keys.hsize);
     if (ctx.values_hash == NULL) {
         ngx_destroy_pool(pool);
@@ -265,14 +269,14 @@ ngx_http_map_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #endif
 
     ctx.default_value = NULL;
-    ctx.cf = &save;
+    ctx.cf = &save; //临时替换，解析结束后再换回
     ctx.hostnames = 0;
     ctx.no_cacheable = 0;
 
     save = *cf;
     cf->pool = pool;
     cf->ctx = &ctx;
-    cf->handler = ngx_http_map;
+    cf->handler = ngx_http_map;  // handler处理token写入hander_conf
     cf->handler_conf = conf;
 
     rv = ngx_conf_parse(cf, NULL);
@@ -378,6 +382,7 @@ ngx_http_map_cmp_dns_wildcards(const void *one, const void *two)
 }
 
 
+// 读出一个token的时候，对他进行如下操作...
 static char *
 ngx_http_map(ngx_conf_t *cf, ngx_command_t *dummy, void *conf)
 {
@@ -396,20 +401,20 @@ ngx_http_map(ngx_conf_t *cf, ngx_command_t *dummy, void *conf)
     value = cf->args->elts;
 
     if (cf->args->nelts == 1
-        && ngx_strcmp(value[0].data, "hostnames") == 0)
+        && ngx_strcmp(value[0].data, "hostnames") == 0)  //hostnames开关
     {
         ctx->hostnames = 1;
         return NGX_CONF_OK;
     }
 
     if (cf->args->nelts == 1
-        && ngx_strcmp(value[0].data, "volatile") == 0)
+        && ngx_strcmp(value[0].data, "volatile") == 0) //volatile开关
     {
         ctx->no_cacheable = 1;
         return NGX_CONF_OK;
     }
 
-    if (cf->args->nelts != 2) {
+    if (cf->args->nelts != 2) {  //要么只有一个值，那是开关，要么一定是两个值
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "invalid number of the map parameters");
         return NGX_CONF_ERROR;
@@ -420,7 +425,7 @@ ngx_http_map(ngx_conf_t *cf, ngx_command_t *dummy, void *conf)
     }
 
     key = 0;
-
+	// 例如1.1.1.1   let_it_go，计算let_it_go的哈希
     for (i = 0; i < value[1].len; i++) { //计算值的hash key
         key = ngx_hash(key, value[1].data[i]);
     }
@@ -461,13 +466,15 @@ ngx_http_map(ngx_conf_t *cf, ngx_command_t *dummy, void *conf)
         }
     }
 
+	//到这里说明没有找到，是一个新的值，为其分配空间
     var = ngx_palloc(ctx->keys.pool, sizeof(ngx_http_variable_value_t));
     if (var == NULL) {
         return NGX_CONF_ERROR;
     }
 
+	//map表的value， 可能是带变量的
     v.len = value[1].len;
-    v.data = ngx_pstrdup(ctx->keys.pool, &value[1]);
+    v.data = ngx_pstrdup(ctx->keys.pool, &value[1]); //此处得看一下为什么要复制出来
     if (v.data == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -488,27 +495,28 @@ ngx_http_map(ngx_conf_t *cf, ngx_command_t *dummy, void *conf)
             return NGX_CONF_ERROR;
         }
 
-        *cvp = cv;
+        *cvp = cv;  //ngx_http_compile_complex_value出来的值
 
         var->len = 0;
-        var->data = (u_char *) cvp;
+        var->data = (u_char *) cvp; //编译后的值
         var->valid = 0;
 
-    } else {
+    } else { //普通变量
         var->len = v.len;
-        var->data = v.data;
+        var->data = v.data; //普通变量就直接赋值
         var->valid = 1;
     }
 
     var->no_cacheable = 0;
     var->not_found = 0;
 
+	// 把编译后的值放进hash表
     vp = ngx_array_push(&ctx->values_hash[key]);
     if (vp == NULL) {
         return NGX_CONF_ERROR;
     }
 
-    *vp = var;
+    *vp = var; //变量地址放入values_hash
 
 found:
 
@@ -564,6 +572,7 @@ found:
 
 #endif
 
+	//以\开头，要越过\？
     if (value[0].len && value[0].data[0] == '\\') {
         value[0].len--;
         value[0].data++;

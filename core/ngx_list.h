@@ -16,18 +16,18 @@
 typedef struct ngx_list_part_s  ngx_list_part_t;
 
 struct ngx_list_part_s {
-    void             *elts;   //½ÚµãÁ´±íÖ¸Õë
-    ngx_uint_t        nelts;  //½ÚµãÊıÁ¿
-    ngx_list_part_t  *next;   //ÏÂÒ»¸ölist ½Úµã
+    void             *elts;   //èŠ‚ç‚¹é“¾è¡¨æŒ‡é’ˆ
+    ngx_uint_t        nelts;  //èŠ‚ç‚¹æ•°é‡
+    ngx_list_part_t  *next;   //ä¸‹ä¸€ä¸ªlist èŠ‚ç‚¹
 };
 
 
 typedef struct {
-    ngx_list_part_t  *last;   //Á´±í×îºó
-    ngx_list_part_t   part;   //Á´±íÍ·
-    size_t            size;   //Ò»¸öunitµÄsize
-    ngx_uint_t        nalloc; //ÉêÇëµÄÄÚ´æunitÊıÁ¿
-    ngx_pool_t       *pool;   //ÄÚ´æ»º´æ
+    ngx_list_part_t  *last;   //é“¾è¡¨æœ€å
+    ngx_list_part_t   part;   //é“¾è¡¨å¤´
+    size_t            size;   //ä¸€ä¸ªunitçš„size
+    ngx_uint_t        nalloc; //ç”³è¯·çš„å†…å­˜unitæ•°é‡
+    ngx_pool_t       *pool;   //å†…å­˜ç¼“å­˜
 } ngx_list_t;
 
 

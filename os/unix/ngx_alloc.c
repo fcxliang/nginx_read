@@ -10,7 +10,7 @@
 
 
 ngx_uint_t  ngx_pagesize;
-ngx_uint_t  ngx_pagesize_shift;
+ngx_uint_t  ngx_pagesize_shift; //4k页的话，为12
 //CPU缓存与主存交换数据每次大小是固定的，我们称其为cpu cache line，在64位系统下通常是64字节
 ngx_uint_t  ngx_cacheline_size; //CPU缓存与主存交换数据单位长度
 

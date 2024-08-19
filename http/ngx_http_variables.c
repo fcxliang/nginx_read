@@ -2394,7 +2394,7 @@ ngx_http_map_find(ngx_http_request_t *r, ngx_http_map_t *map, ngx_str_t *match)
 
     key = ngx_hash_strlow(low, match->data, len);
 
-    value = ngx_hash_find_combined(&map->hash, key, low, len);
+    value = ngx_hash_find_combined(&map->hash, key, low, len);  //key为hash key，low 为变量名
     if (value) {
         return value;
     }

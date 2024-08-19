@@ -17,7 +17,7 @@ typedef struct ngx_slab_page_s  ngx_slab_page_t;
 
 struct ngx_slab_page_s {
     uintptr_t         slab;
-    ngx_slab_page_t  *next;
+    ngx_slab_page_t  *next; //空闲slab page
     uintptr_t         prev;
 };
 
@@ -37,7 +37,7 @@ typedef struct {
     size_t            min_size;
     size_t            min_shift;
 
-    ngx_slab_page_t  *pages;
+    ngx_slab_page_t  *pages; //指向pages表
     ngx_slab_page_t  *last;
     ngx_slab_page_t   free;
 

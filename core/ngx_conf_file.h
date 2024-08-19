@@ -20,8 +20,8 @@
  */
 
 #define NGX_CONF_NOARGS      0x00000001
-#define NGX_CONF_TAKE1       0x00000002   //����һ������
-#define NGX_CONF_TAKE2       0x00000004   //����2������
+#define NGX_CONF_TAKE1       0x00000002
+#define NGX_CONF_TAKE2       0x00000004
 #define NGX_CONF_TAKE3       0x00000008
 #define NGX_CONF_TAKE4       0x00000010
 #define NGX_CONF_TAKE5       0x00000020
@@ -30,7 +30,7 @@
 
 #define NGX_CONF_MAX_ARGS    8
 
-#define NGX_CONF_TAKE12      (NGX_CONF_TAKE1|NGX_CONF_TAKE2)  //����һ��������������
+#define NGX_CONF_TAKE12      (NGX_CONF_TAKE1|NGX_CONF_TAKE2)
 #define NGX_CONF_TAKE13      (NGX_CONF_TAKE1|NGX_CONF_TAKE3)
 
 #define NGX_CONF_TAKE23      (NGX_CONF_TAKE2|NGX_CONF_TAKE3)
@@ -46,10 +46,10 @@
 #define NGX_CONF_1MORE       0x00000800
 #define NGX_CONF_2MORE       0x00001000
 
-#define NGX_DIRECT_CONF      0x00010000
+#define NGX_DIRECT_CONF      0x00010000  //仅与MAIN_CONF同时设置，表示模块需要解析不属于任何{}的全局配置项
 
 #define NGX_MAIN_CONF        0x01000000
-#define NGX_ANY_CONF         0xFF000000
+#define NGX_ANY_CONF         0xFF000000  //目前未使用
 
 
 
@@ -112,7 +112,7 @@ typedef struct {
 typedef char *(*ngx_conf_handler_pt)(ngx_conf_t *cf,
     ngx_command_t *dummy, void *conf);
 
-//表示解析当前配置指令是的运行时环境数据
+//一条指令的运行时数据
 struct ngx_conf_s {
     char                 *name;
     ngx_array_t          *args; //分割好的配置文件指令字符串  [0]指令名  [1] 参数1 [n]参数n
@@ -123,12 +123,12 @@ struct ngx_conf_s {
     ngx_conf_file_t      *conf_file;
     ngx_log_t            *log;
 
-    void                 *ctx; //根据模块变化，http为ngx_http_conf_ctx_t
+    void                 *ctx; //存放解析后的配置指针的数组，使用每个模块的ctx_idx来索引，http为ngx_http_conf_ctx_t
     ngx_uint_t            module_type;
     ngx_uint_t            cmd_type;
 
-    ngx_conf_handler_pt   handler;
-    void                 *handler_conf;
+    ngx_conf_handler_pt   handler; //如何解析该指令
+    void                 *handler_conf; //解析后要填充的结构
 };
 
 

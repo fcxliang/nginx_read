@@ -189,7 +189,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
         prev = cf->conf_file;
 
-        cf->conf_file = &conf_file;
+        cf->conf_file = &conf_file; //使用新的conf_file作为文件处理现场
 
         if (ngx_fd_info(fd, &cf->conf_file->file.info) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_EMERG, cf->log, ngx_errno,
@@ -241,7 +241,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
 
     for ( ;; ) {
-        rc = ngx_conf_read_token(cf);
+        rc = ngx_conf_read_token(cf); //读取一行，或者遇到{、 }
 
         /*
          * ngx_conf_read_token() may return
@@ -367,9 +367,9 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
     found = 0;
 
-    for (i = 0; cf->cycle->modules[i]; i++) {
+    for (i = 0; cf->cycle->modules[i]; i++) { //遍历所有模块
 
-        cmd = cf->cycle->modules[i]->commands;
+        cmd = cf->cycle->modules[i]->commands; //找到command结构
         if (cmd == NULL) {
             continue;
         }
@@ -387,7 +387,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             found = 1;
 
             if (cf->cycle->modules[i]->type != NGX_CONF_MODULE
-                && cf->cycle->modules[i]->type != cf->module_type)
+                && cf->cycle->modules[i]->type != cf->module_type) //主流程中是类型是core模块
             {
                 continue;
             }
@@ -449,13 +449,15 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             conf = NULL;
 
             if (cmd->type & NGX_DIRECT_CONF) {
-                conf = ((void **) cf->ctx)[cf->cycle->modules[i]->index];
+				//所有NGX_DIRECT_CONF都是和NGX_MAIN_CONF同时出现的。NGX_DIRECT_CONF表示，配置文件对应的结构已经创建。
+                conf = ((void **) cf->ctx)[cf->cycle->modules[i]->index]; //最外层的，且没有{}的指令，如pid，空间已经在create_conf创建好了，这里得到正式这个空间地址
 
             } else if (cmd->type & NGX_MAIN_CONF) {
-                conf = &(((void **) cf->ctx)[cf->cycle->modules[i]->index]);
+            	//绝大多数NGX_MAIN_CONF和NGX_DIRECT_CONF是同时出现的。对于单独出现的NGX_MAIN_CONF表示，配置文件对应的结构还没有创建。配置文件中main区域的指令，都具有这个类型。
+				conf = &(((void **) cf->ctx)[cf->cycle->modules[i]->index]); //最外层的，且有{}的指令，如http，create_conf是空的，没有地址，所以直接把这个存放指针的地址传入
 
             } else if (cf->ctx) {
-                confp = *(void **) ((char *) cf->ctx + cmd->conf);
+                confp = *(void **) ((char *) cf->ctx + cmd->conf); //NGX_HTTP_MAIN_CONF_OFFSET
 
                 if (confp) {
                     conf = confp[cf->cycle->modules[i]->ctx_index];

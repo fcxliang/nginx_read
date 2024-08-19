@@ -514,7 +514,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
     ngx_int_t     rc;
     ngx_event_t  *rev;
 
-    if (r != r->main || r->discard_body || r->request_body) {
+    if (r != r->main || r->discard_body || r->request_body) { // 不是原始请求，或者已经被丢弃了或者没有body那就不需要丢弃了
         return NGX_OK;
     }
 
@@ -525,7 +525,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
     }
 #endif
 
-    if (ngx_http_test_expect(r) != NGX_OK) {
+    if (ngx_http_test_expect(r) != NGX_OK) { //是否是Expect: 100-continue
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
@@ -533,24 +533,26 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, rev->log, 0, "http set discard body");
 
-    if (rev->timer_set) {
+    if (rev->timer_set) { //存在定时器，删除定时器，因为不需要请求体
         ngx_del_timer(rev);
     }
 
+	// ct_len < 0, 且heads没有chunked
     if (r->headers_in.content_length_n <= 0 && !r->headers_in.chunked) {
         return NGX_OK;
     }
 
+	// 存在header_in
     size = r->header_in->last - r->header_in->pos;
 
-    if (size || r->headers_in.chunked) {
+    if (size || r->headers_in.chunked) { //有body
         rc = ngx_http_discard_request_body_filter(r, r->header_in);
 
         if (rc != NGX_OK) {
             return rc;
         }
 
-        if (r->headers_in.content_length_n == 0) {
+        if (r->headers_in.content_length_n == 0) { //丢弃完了所有的内容？
             return NGX_OK;
         }
     }
@@ -603,7 +605,7 @@ ngx_http_discarded_request_body_handler(ngx_http_request_t *r)
     if (r->lingering_time) {
         timer = (ngx_msec_t) r->lingering_time - (ngx_msec_t) ngx_time();
 
-        if ((ngx_msec_int_t) timer <= 0) {
+        if ((ngx_msec_int_t) timer <= 0) { //已经超时了
             r->discard_body = 0;
             r->lingering_close = 0;
             ngx_http_finalize_request(r, NGX_ERROR);
@@ -614,16 +616,16 @@ ngx_http_discarded_request_body_handler(ngx_http_request_t *r)
         timer = 0;
     }
 
-    rc = ngx_http_read_discarded_request_body(r);
+    rc = ngx_http_read_discarded_request_body(r); //把body读出来，但不做处理
 
-    if (rc == NGX_OK) {
+    if (rc == NGX_OK) { //成功
         r->discard_body = 0;
         r->lingering_close = 0;
         ngx_http_finalize_request(r, NGX_DONE);
         return;
     }
 
-    if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+    if (rc >= NGX_HTTP_SPECIAL_RESPONSE) { //大于300的错误号
         c->error = 1;
         ngx_http_finalize_request(r, NGX_ERROR);
         return;
@@ -670,7 +672,7 @@ ngx_http_read_discarded_request_body(ngx_http_request_t *r)
 
     for ( ;; ) {
         if (r->headers_in.content_length_n == 0) {
-            r->read_event_handler = ngx_http_block_reading;
+            r->read_event_handler = ngx_http_block_reading; //不需要读，删除读事件
             return NGX_OK;
         }
 
@@ -678,6 +680,7 @@ ngx_http_read_discarded_request_body(ngx_http_request_t *r)
             return NGX_AGAIN;
         }
 
+		// content_length_n 或者buffersize看哪个小
         size = (size_t) ngx_min(r->headers_in.content_length_n,
                                 NGX_HTTP_DISCARD_BUFFER_SIZE);
 
@@ -697,7 +700,7 @@ ngx_http_read_discarded_request_body(ngx_http_request_t *r)
         }
 
         b.pos = buffer;
-        b.last = buffer + n;
+        b.last = buffer + n; //读取到的内容长度
 
         rc = ngx_http_discard_request_body_filter(r, &b);
 
@@ -781,22 +784,28 @@ ngx_http_discard_request_body_filter(ngx_http_request_t *r, ngx_buf_t *b)
         }
 
     } else {
-        size = b->last - b->pos;
+        size = b->last - b->pos; //读到的内容长度
 
-        if ((off_t) size > r->headers_in.content_length_n) {
+        if ((off_t) size > r->headers_in.content_length_n) { //header_in长度比ct_len大
             b->pos += (size_t) r->headers_in.content_length_n;
             r->headers_in.content_length_n = 0;
 
         } else {
             b->pos = b->last;
-            r->headers_in.content_length_n -= size;
+            r->headers_in.content_length_n -= size; //说明buf比content_len小
         }
     }
 
     return NGX_OK;
 }
 
-
+/*
+函数接着调用ngx_http_test_expect()检查客户端是否发送了Expect: 100-continue头，
+是的话则给客户端回复”HTTP/1.1 100 Continue”，根据http 1.1协议，
+客户端可以发送一个Expect头来向服务器表明期望发送请求体，
+服务器如果允许客户端发送请求体，则会回复”HTTP/1.1 100 Continue”，
+客户端收到时，才会开始发送请求体。
+*/
 static ngx_int_t
 ngx_http_test_expect(ngx_http_request_t *r)
 {

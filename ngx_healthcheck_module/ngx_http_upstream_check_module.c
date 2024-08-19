@@ -15,7 +15,7 @@
 #define LOG_LEVEL NGX_LOG_DEBUG_HTTP
 #define MODULE_NAME "[ngx_healthcheck:http]"
 
-#pragma pack(push, 1)  //���°�1�ֽڶ��룬����Ҫpadding
+#pragma pack(push, 1)  //以下按1字节对齐，不需要padding
 
 typedef struct {
     u_char                                   major;
@@ -56,7 +56,7 @@ typedef struct {
 
 #pragma pack(pop)
 
-
+//当前检查状态
 typedef struct {
     ngx_buf_t                                send;
     ngx_buf_t                                recv;
@@ -390,7 +390,7 @@ struct ngx_command_s {
 };
 */
 
-static ngx_command_t  ngx_http_upstream_check_commands[] = {  //����
+static ngx_command_t  ngx_http_upstream_check_commands[] = {  //命令
 
     { ngx_string("check"),
       NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
@@ -413,7 +413,7 @@ static ngx_command_t  ngx_http_upstream_check_commands[] = {  //����
       0,
       NULL },
 
-    { ngx_string("check_http_expect_alive"),
+    { ngx_string("check_http_expect_alive"),  //根据状态码
       NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
       ngx_http_upstream_check_http_expect_alive,
       0,
@@ -546,20 +546,20 @@ static char ngx_ajp_cpong_packet[] = {
     0x41, 0x42, 0x00, 0x01, NGX_AJP_CPONG
 };
 
-
+//支持不同类型的检查
 static ngx_check_conf_t  ngx_check_types[] = {
 
-    { NGX_HTTP_CHECK_TCP,
-      ngx_string("tcp"),
-      ngx_null_string,
-      0,
-      ngx_http_upstream_check_peek_handler,
-      ngx_http_upstream_check_peek_handler,
-      NULL,
-      NULL,
-      NULL,
-      0,
-      1 },
+    { NGX_HTTP_CHECK_TCP,                      //type
+      ngx_string("tcp"),                       //name
+      ngx_null_string,                         //default send
+      0,                                       //default_status_alive
+      ngx_http_upstream_check_peek_handler,    //send_handler
+      ngx_http_upstream_check_peek_handler,    //recv_hander
+      NULL,                                    //init
+      NULL,                                    //parse
+      NULL,                                    //reinit
+      0,                                       //need_pools
+      1 },                                     //need_keepalive
 
     { NGX_HTTP_CHECK_HTTP,
       ngx_string("http"),
@@ -666,7 +666,7 @@ static ngx_check_status_command_t ngx_check_status_commands[] =  {
 
 
 static ngx_uint_t ngx_http_upstream_check_shm_generation = 0;
-ngx_upstream_check_peers_t *http_peers_ctx = NULL;
+ngx_upstream_check_peers_t *http_peers_ctx = NULL; //存储所有peer配置及状态的shm入口
 
 
 ngx_uint_t
@@ -879,16 +879,16 @@ ngx_http_upstream_check_add_timers(ngx_cycle_t *cycle)
     peer = peers->peers.elts;
     peer_shm = peers_shm->peers;
 
-    for (i = 0; i < peers->peers.nelts; i++) {
+    for (i = 0; i < peers->peers.nelts; i++) { //遍历所有的ctx
         peer[i].shm = &peer_shm[i];
 
-        peer[i].check_ev.handler = ngx_http_upstream_check_begin_handler;
+        peer[i].check_ev.handler = ngx_http_upstream_check_begin_handler; //周期
         peer[i].check_ev.log = cycle->log;
-        peer[i].check_ev.data = &peer[i];
+        peer[i].check_ev.data = &peer[i]; //指回peer
         peer[i].check_ev.timer_set = 0;
 
         peer[i].check_timeout_ev.handler =
-            ngx_http_upstream_check_timeout_handler;
+            ngx_http_upstream_check_timeout_handler; //处理超时的请求
         peer[i].check_timeout_ev.log = cycle->log;
         peer[i].check_timeout_ev.data = &peer[i];
         peer[i].check_timeout_ev.timer_set = 0;
@@ -917,7 +917,7 @@ ngx_http_upstream_check_add_timers(ngx_cycle_t *cycle)
         delay = ucscf->check_interval > 1000 ? ucscf->check_interval : 1000;
         t = ngx_random() % delay;
 
-        ngx_add_timer(&peer[i].check_ev, t);
+        ngx_add_timer(&peer[i].check_ev, t); //首次添加时间，搞一个周期内的随机延时
     }
 
     return NGX_OK;
@@ -933,11 +933,11 @@ ngx_http_upstream_check_begin_handler(ngx_event_t *event)
     ngx_upstream_check_srv_conf_t  *ucscf;
     ngx_upstream_check_peers_shm_t *peers_shm;
 
-    if (ngx_http_upstream_check_need_exit()) {
+    if (ngx_http_upstream_check_need_exit()) { //如果ng退出的话，关闭所有的定时器
         return;
     }
 
-    peers = http_peers_ctx;
+    peers = http_peers_ctx; //所有ctx
     if (peers == NULL) {
         return;
     }
@@ -950,15 +950,16 @@ ngx_http_upstream_check_begin_handler(ngx_event_t *event)
     peer = event->data;
     ucscf = peer->conf;
 
-    ngx_add_timer(event, ucscf->check_interval / 2);
+	//把定时任务再注册回去？
+    ngx_add_timer(event, ucscf->check_interval / 2); //为什么1/2
 
     /* This process is processing this peer now. */
     if ((peer->shm->owner == ngx_pid  ||
-        peer->check_timeout_ev.timer_set)) {
+        peer->check_timeout_ev.timer_set)) { //说明正在被本进程处理，处理周期覆盖了？
         return;
     }
 
-    interval = ngx_current_msec - peer->shm->access_time;
+    interval = ngx_current_msec - peer->shm->access_time; //当前时间 - 最后访问时间
     ngx_log_debug5(NGX_LOG_DEBUG_HTTP, event->log, 0, MODULE_NAME
                    "http check begin handler index: %ui, owner: %P, "
                    "ngx_pid: %P, interval: %M, check_interval: %M",
@@ -973,13 +974,13 @@ ngx_http_upstream_check_begin_handler(ngx_event_t *event)
         return;
     }
 
-    if ((interval >= ucscf->check_interval)
+    if ((interval >= ucscf->check_interval) //周期已到，且还没有进程处理他，那么处理他
          && (peer->shm->owner == NGX_INVALID_PID))
     {
-        peer->shm->owner = ngx_pid;
+        peer->shm->owner = ngx_pid; //本进程要处理他了
 
-    } else if (interval >= (ucscf->check_interval << 4)) {
-
+    } else if (interval >= (ucscf->check_interval << 4)) { //时间过了周期的16倍
+    	// 强制处理
         /*
          * If the check peer has been untouched for 2^4 times of
          * the check interval, activate the current timer.
@@ -994,11 +995,11 @@ ngx_http_upstream_check_begin_handler(ngx_event_t *event)
     ngx_shmtx_unlock(&peer->shm->mutex);
 
     if (peer->shm->owner == ngx_pid) {
-        ngx_http_upstream_check_connect_handler(event);
+        ngx_http_upstream_check_connect_handler(event);  //开始处理
     }
 }
 
-
+//检查连接
 static void
 ngx_http_upstream_check_connect_handler(ngx_event_t *event)
 {
@@ -1014,15 +1015,18 @@ ngx_http_upstream_check_connect_handler(ngx_event_t *event)
     peer = event->data;
     ucscf = peer->conf;
 
-    if (peer->pc.connection != NULL) {
+    if (peer->pc.connection != NULL) { //有连接
         c = peer->pc.connection;
-        if ((rc = ngx_http_upstream_check_peek_one_byte(c)) == NGX_OK) {
+        if ((rc = ngx_http_upstream_check_peek_one_byte(c)) == NGX_OK) { //接收1个byte
             goto upstream_check_connect_done;
         } else {
             ngx_close_connection(c);
             peer->pc.connection = NULL;
         }
     }
+
+	//没有连接...
+
     ngx_memzero(&peer->pc, sizeof(ngx_peer_connection_t));
 
     peer->pc.sockaddr = peer->check_peer_addr->sockaddr;
@@ -1036,7 +1040,7 @@ ngx_http_upstream_check_connect_handler(ngx_event_t *event)
     peer->pc.cached = 0;
     peer->pc.connection = NULL;
 
-    rc = ngx_event_connect_peer(&peer->pc);
+    rc = ngx_event_connect_peer(&peer->pc); // 连接到peer
 
     if (rc == NGX_ERROR || rc == NGX_DECLINED) {
         ngx_http_upstream_check_status_update(peer, 0);
@@ -1059,6 +1063,7 @@ upstream_check_connect_done:
     c->write->handler = peer->send_handler;
     c->read->handler = peer->recv_handler;
 
+	//处理连接或者接收超时的情况
     ngx_add_timer(&peer->check_timeout_ev, ucscf->check_timeout);
 
     /* The kqueue's loop interface needs it. */
@@ -1412,7 +1417,7 @@ ngx_http_upstream_check_http_init(ngx_upstream_check_peer_t *peer)
     ctx->recv.start = ctx->recv.pos = NULL;
     ctx->recv.end = ctx->recv.last = NULL;
 
-    ctx->state = 0;
+    ctx->state = 0; //sw_start
 
     ngx_memzero(&ctx->status, sizeof(ngx_http_status_t));
 
@@ -2262,7 +2267,7 @@ ngx_http_upstream_check_ajp_reinit(ngx_upstream_check_peer_t *peer)
     ctx->recv.pos = ctx->recv.last = ctx->recv.start;
 }
 
-
+//修改peer状态
 static void
 ngx_http_upstream_check_status_update(ngx_upstream_check_peer_t *peer,
     ngx_int_t result)
@@ -2274,6 +2279,7 @@ ngx_http_upstream_check_status_update(ngx_upstream_check_peer_t *peer,
     if (result) {
         peer->shm->rise_count++;
         peer->shm->fall_count = 0;
+		//当前是down的，rise_count大于设定值
         if (peer->shm->down && peer->shm->rise_count >= ucscf->rise_count) {
             peer->shm->down = 0;
             ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0, MODULE_NAME
@@ -2283,15 +2289,16 @@ ngx_http_upstream_check_status_update(ngx_upstream_check_peer_t *peer,
     } else {
         peer->shm->rise_count = 0;
         peer->shm->fall_count++;
+		//当前是up的，fall_count大于设定值
         if (!peer->shm->down && peer->shm->fall_count >= ucscf->fall_count) {
-            peer->shm->down = 1;
+            peer->shm->down = 1; //设置为down
             ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0, MODULE_NAME
                           "disable check peer: %V ",
                           &peer->check_peer_addr->name);
         }
     }
 
-    peer->shm->access_time = ngx_current_msec;
+    peer->shm->access_time = ngx_current_msec; //设置访问时间为当前时间
 }
 
 
@@ -2323,7 +2330,7 @@ ngx_http_upstream_check_clean_event(ngx_upstream_check_peer_t *peer)
     }
 
     if (peer->check_timeout_ev.timer_set) {
-        ngx_del_timer(&peer->check_timeout_ev);
+        ngx_del_timer(&peer->check_timeout_ev); //删除超时定时器
     }
 
     peer->state = NGX_HTTP_CHECK_ALL_DONE;
@@ -2352,7 +2359,7 @@ ngx_http_upstream_check_timeout_handler(ngx_event_t *event)
                   "check time out with peer: %V ",
                   &peer->check_peer_addr->name);
 
-    ngx_http_upstream_check_status_update(peer, 0);
+    ngx_http_upstream_check_status_update(peer, 0); //设置失败
     ngx_http_upstream_check_clean_event(peer);
 }
 
@@ -2377,7 +2384,7 @@ ngx_http_upstream_check_need_exit()
     return 0;
 }
 
-
+//删除所有的定时器
 static void
 ngx_http_upstream_check_clear_all_events()
 {
@@ -2595,22 +2602,22 @@ ngx_http_upstream_check_status_html_format(ngx_buf_t *b,
 
     count = 0;
 
-    for (i = 0; i < peers->peers.nelts; i++) { //�������еĺ��
+    for (i = 0; i < peers->peers.nelts; i++) { //遍历所有的后端
 
-        if (flag & NGX_CHECK_STATUS_DOWN) {  //flag��down�ģ��ڴ�����up
+        if (flag & NGX_CHECK_STATUS_DOWN) {  //flag是down的，内存中是up
 
             if (!peer[i].shm->down) {
                 continue;
             }
 
-        } else if (flag & NGX_CHECK_STATUS_UP) { //flag��up ���ڴ���down
+        } else if (flag & NGX_CHECK_STATUS_UP) { //flag是up ，内存是down
 
             if (peer[i].shm->down) {
                 continue;
             }
         }
 
-        count++; //flag���ڴ�״̬��һ�µ�ͳ��
+        count++; //flag与内存状态不一致的统计
     }
 
     b->last = ngx_snprintf(b->last, b->end - b->last,
@@ -3060,6 +3067,7 @@ ngx_http_upstream_check_http_expect_alive(ngx_conf_t *cf, ngx_command_t *cmd,
     for (i = 1; i < cf->args->nelts; i++) {
         for (m = 0; mask[m].name.len != 0; m++) {
 
+			//支持的参数为http_2xx ...
             if (mask[m].name.len != value[i].len
                 || ngx_strcasecmp(mask[m].name.data, value[i].data) != 0)
             {
@@ -3434,7 +3442,7 @@ ngx_http_upstream_check_init_srv_conf(ngx_conf_t *cf, void *conf)
     if (us->srv_conf == NULL) {
         return NGX_CONF_OK;
     }
-
+	//下面开始为ucscf赋值
     ucscf = ngx_http_conf_upstream_srv_conf(us, ngx_http_upstream_check_module);
 
     if (ucscf->port == NGX_CONF_UNSET_UINT) {
@@ -3471,7 +3479,7 @@ ngx_http_upstream_check_init_srv_conf(ngx_conf_t *cf, void *conf)
         if (ucscf->send.len == 0) {
             ngx_str_set(&s, "fastcgi");
 
-            if (check == ngx_http_get_check_type_conf(&s)) {
+            if (check == ngx_http_get_check_type_conf(&s)) { //fastcgi
 
                 if (ucscf->fastcgi_params->nelts == 0) {
                     ucscf->send.data = fastcgi_default_request.data;

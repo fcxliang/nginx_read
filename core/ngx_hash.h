@@ -73,13 +73,13 @@ typedef struct {
 
 
 typedef struct {
-    ngx_uint_t        hsize;
+    ngx_uint_t        hsize; //hash表桶的个数
 
     ngx_pool_t       *pool;
     ngx_pool_t       *temp_pool;
 
-    ngx_array_t       keys;
-    ngx_array_t      *keys_hash;
+    ngx_array_t       keys; //所有非通配符的key的数组
+    ngx_array_t      *keys_hash; //hash表及桶，2个key冲突的话keys_hash[i][0],keys_hash[i][1]
 
     ngx_array_t       dns_wc_head;
     ngx_array_t      *dns_wc_head_hash;

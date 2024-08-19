@@ -2439,7 +2439,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
                    "http finalize request: %i, \"%V?%V\" a:%d, c:%d",
                    rc, &r->uri, &r->args, r == c->data, r->main->count);
 
-    if (rc == NGX_DONE) {
+    if (rc == NGX_DONE) { //处理结束关闭
         ngx_http_finalize_connection(r);
         return;
     }
@@ -2448,6 +2448,9 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         c->error = 1;
     }
 
+	// Nginx 中一个表示拒绝执行的返回值。在 Nginx 的模块开发中，
+	// NGX_DECLINED 主要用于表示某个处理阶段或者某个处理函数不愿意或者不适合处理当前请求，
+	// 希望将请求传递给下一个处理阶段或者处理函数来处理。
     if (rc == NGX_DECLINED) {
         r->content_handler = NULL;
         r->write_event_handler = ngx_http_core_run_phases;
@@ -2455,7 +2458,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         return;
     }
 
-    if (r != r->main && r->post_subrequest) {
+    if (r != r->main && r->post_subrequest) { //有子请求
         rc = r->post_subrequest->handler(r, r->post_subrequest->data, rc);
     }
 
@@ -2464,26 +2467,26 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         || rc == NGX_HTTP_CLIENT_CLOSED_REQUEST
         || c->error)
     {
-        if (ngx_http_post_action(r) == NGX_OK) {
+        if (ngx_http_post_action(r) == NGX_OK) { // post_action指令
             return;
         }
 
-        ngx_http_terminate_request(r, rc);
+        ngx_http_terminate_request(r, rc); //终止request
         return;
     }
 
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE
         || rc == NGX_HTTP_CREATED
-        || rc == NGX_HTTP_NO_CONTENT)
+        || rc == NGX_HTTP_NO_CONTENT)  //>= 300或者 ==201/204 上传大文件成功
     {
-        if (rc == NGX_HTTP_CLOSE) {
+        if (rc == NGX_HTTP_CLOSE) { //444
             c->timedout = 1;
             ngx_http_terminate_request(r, rc);
             return;
         }
 
-        if (r == r->main) {
-            if (c->read->timer_set) {
+        if (r == r->main) { //主请求
+            if (c->read->timer_set) { //如果是1 表明事件在定时器中
                 ngx_del_timer(c->read);
             }
 
@@ -2492,14 +2495,14 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
             }
         }
 
-        c->read->handler = ngx_http_request_handler;
+        c->read->handler = ngx_http_request_handler; //继续处理http请求s
         c->write->handler = ngx_http_request_handler;
 
-        ngx_http_finalize_request(r, ngx_http_special_response_handler(r, rc));
+        ngx_http_finalize_request(r, ngx_http_special_response_handler(r, rc)); //201 204 300以上，由框架返回响应
         return;
     }
 
-    if (r != r->main) {
+    if (r != r->main) { //子请求
 
         if (r->buffered || r->postponed) {
 
@@ -2537,7 +2540,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
                 return;
             }
 
-            r->main->count--;
+            r->main->count--; //引用计数-1
 
             if (pr->postponed && pr->postponed->request == r) {
                 pr->postponed = pr->postponed->next;
@@ -2571,9 +2574,9 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         return;
     }
 
-    if (r->buffered || c->buffered || r->postponed) {
+    if (r->buffered || c->buffered || r->postponed) { //out缓冲区内还有没法送完的响应
 
-        if (ngx_http_set_write_handler(r) != NGX_OK) {
+        if (ngx_http_set_write_handler(r) != NGX_OK) { //将ngx_http_write注册个epoll，当连接再次可写时发送剩余响应
             ngx_http_terminate_request(r, 0);
         }
 
@@ -2618,6 +2621,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
 }
 
 
+//非正常场景，强制关闭请求
 static void
 ngx_http_terminate_request(ngx_http_request_t *r, ngx_int_t rc)
 {
@@ -2625,7 +2629,7 @@ ngx_http_terminate_request(ngx_http_request_t *r, ngx_int_t rc)
     ngx_http_request_t    *mr;
     ngx_http_ephemeral_t  *e;
 
-    mr = r->main;
+    mr = r->main; //直接找到main request
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http terminate request count:%d", mr->count);
@@ -2637,7 +2641,7 @@ ngx_http_terminate_request(ngx_http_request_t *r, ngx_int_t rc)
     cln = mr->cleanup;
     mr->cleanup = NULL;
 
-    while (cln) {
+    while (cln) { //执行清理
         if (cln->handler) {
             cln->handler(cln->data);
         }
@@ -2680,6 +2684,7 @@ ngx_http_terminate_handler(ngx_http_request_t *r)
 }
 
 
+//增加了keepalive和子请求情况处理
 static void
 ngx_http_finalize_connection(ngx_http_request_t *r)
 {
@@ -2694,9 +2699,9 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
-    if (r->main->count != 1) {
+    if (r->main->count != 1) { //还有多个动作在操作请求
 
-        if (r->discard_body) {
+        if (r->discard_body) { //正在丢弃body
             r->read_event_handler = ngx_http_discarded_request_body_handler;
             ngx_add_timer(r->connection->read, clcf->lingering_timeout);
 
@@ -2710,6 +2715,8 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
         return;
     }
 
+	//count 为1， 说明真的可以结束请求了
+
     r = r->main;
 
     if (r->reading_body) {
@@ -2719,9 +2726,12 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
 
     if (!ngx_terminate
          && !ngx_exiting
-         && r->keepalive
+         && r->keepalive //复用tcp连接
          && clcf->keepalive_timeout > 0)
     {
+    	//会把表示请
+		//求的ngx_http_request_t结构体释放，却又不会调用ngx_http_close_connection方法关闭连接，同
+		//时也在检测keepalive连接是否超时
         ngx_http_set_keepalive(r);
         return;
     }
@@ -2729,10 +2739,10 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
     if (clcf->lingering_close == NGX_HTTP_LINGERING_ALWAYS
         || (clcf->lingering_close == NGX_HTTP_LINGERING_ON
             && (r->lingering_close
-                || r->header_in->pos < r->header_in->last
-                || r->connection->read->ready)))
+                || r->header_in->pos < r->header_in->last //还没处理完
+                || r->connection->read->ready)))  //主备好读，但还没读
     {
-        ngx_http_set_lingering_close(r);
+        ngx_http_set_lingering_close(r); //设置延迟关闭
         return;
     }
 
@@ -2755,7 +2765,7 @@ ngx_http_set_write_handler(ngx_http_request_t *r)
 
     wev = r->connection->write;
 
-    if (wev->ready && wev->delayed) {
+    if (wev->ready && wev->delayed) { //delayed为1标识限制发送速度
         return NGX_OK;
     }
 
@@ -3539,7 +3549,7 @@ ngx_http_post_action(ngx_http_request_t *r)
     return NGX_OK;
 }
 
-
+// 最终的真实的关闭操作，count计数器--
 static void
 ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
 {
@@ -3555,8 +3565,10 @@ ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
         ngx_log_error(NGX_LOG_ALERT, c->log, 0, "http request count is zero");
     }
 
-    r->count--;
+    r->count--; //先把引用计数-1
 
+	//这时如果引用计数不为0，则说明还有其他http模块需要requst
+	//blocked模块不为0，说明还有HTTP模块需要处理请求，目前主要由AIO使用的
     if (r->count || r->blocked) {
         return;
     }
@@ -3568,8 +3580,8 @@ ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
     }
 #endif
 
-    ngx_http_free_request(r, rc);
-    ngx_http_close_connection(c);
+    ngx_http_free_request(r, rc); //关闭request，释放request内存
+    ngx_http_close_connection(c);  //关闭tcp连接，释放pool
 }
 
 
@@ -3622,7 +3634,7 @@ ngx_http_free_request(ngx_http_request_t *r, ngx_int_t rc)
     if (!r->logged) {
         log->action = "logging request";
 
-        ngx_http_log_request(r);
+        ngx_http_log_request(r); //调用LOG_PHASE回调
     }
 
     log->action = "closing request";
@@ -3659,7 +3671,7 @@ ngx_http_free_request(ngx_http_request_t *r, ngx_int_t rc)
     pool = r->pool;
     r->pool = NULL;
 
-    ngx_destroy_pool(pool);
+    ngx_destroy_pool(pool); //释放request内容
 }
 
 

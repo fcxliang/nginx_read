@@ -332,9 +332,9 @@ typedef void (*ngx_http_cleanup_pt)(void *data);
 typedef struct ngx_http_cleanup_s  ngx_http_cleanup_t;
 
 struct ngx_http_cleanup_s {
-    ngx_http_cleanup_pt               handler;
-    void                             *data;
-    ngx_http_cleanup_t               *next;
+    ngx_http_cleanup_pt               handler; //由http模块提供的清理资源的回调方法
+    void                             *data; //给handler传递的参数
+    ngx_http_cleanup_t               *next; //一个请求可能会有多个清理方法，链表
 };
 
 
@@ -390,7 +390,7 @@ struct ngx_http_request_s {
                                          /* of ngx_http_upstream_state_t */
 
     ngx_pool_t                       *pool;
-    ngx_buf_t                        *header_in;
+    ngx_buf_t                        *header_in; //用于接收http请求内容的缓冲区，主要接收http头部
 
     ngx_http_headers_in_t             headers_in;
     ngx_http_headers_out_t            headers_out;
@@ -415,8 +415,8 @@ struct ngx_http_request_s {
     ngx_str_t                         schema;
 
     ngx_chain_t                      *out;
-    ngx_http_request_t               *main;
-    ngx_http_request_t               *parent;
+    ngx_http_request_t               *main; //永远只想原始请求 如果r==r->main说明当前请求是原始请求
+    ngx_http_request_t               *parent; //当前请求的父请求（但未必是原始请求）
     ngx_http_postponed_request_t     *postponed;
     ngx_http_post_subrequest_t       *post_subrequest;
     ngx_http_posted_request_t        *posted_requests;
@@ -478,13 +478,13 @@ struct ngx_http_request_s {
     unsigned                          uri_changed:1;
     unsigned                          uri_changes:4;
 
-    unsigned                          request_body_in_single_buf:1;
-    unsigned                          request_body_in_file_only:1;
-    unsigned                          request_body_in_persistent_file:1;
-    unsigned                          request_body_in_clean_file:1;
-    unsigned                          request_body_file_group_access:1;
-    unsigned                          request_body_file_log_level:3;
-    unsigned                          request_body_no_buffering:1;
+    unsigned                          request_body_in_single_buf:1; //将正文读取到单个内存缓冲区
+    unsigned                          request_body_in_file_only:1; //始终将正文读取到文件中，即使适合内存缓冲区
+    unsigned                          request_body_in_persistent_file:1; //创建后不要立即解除关联。带有此标志的文件可以移动到另一个目录
+    unsigned                          request_body_in_clean_file:1; //当请求完成时取消链接文件。当文件应该移动到另一个目录但由于某种原因没有移动时，这很有用
+    unsigned                          request_body_file_group_access:1; //通过将默认的0600访问掩码替换为0660来启用对文件的组访问
+    unsigned                          request_body_file_log_level:3; //记录文件错误的严重级别
+    unsigned                          request_body_no_buffering:1; //在不缓冲的情况下读取请求正文
 
     unsigned                          subrequest_in_memory:1;
     unsigned                          waited:1;

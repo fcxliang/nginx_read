@@ -1110,10 +1110,10 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
         return NULL;
     }
 
-    c = ngx_cycle->free_connections;  //连接数组
+    c = ngx_cycle->free_connections;  //空闲连接数组
 
     if (c == NULL) { //没有free的connections时
-        ngx_drain_connections((ngx_cycle_t *) ngx_cycle);
+        ngx_drain_connections((ngx_cycle_t *) ngx_cycle); //关闭可复用连接腾出空间
         c = ngx_cycle->free_connections;
     }
 
@@ -1125,6 +1125,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
         return NULL;
     }
 
+	//c->data data这里存储着next地址
     ngx_cycle->free_connections = c->data; //对链表头取下一个connection，free指向下一个
     ngx_cycle->free_connection_n--; //计数-1
 
@@ -1139,7 +1140,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     c->read = rev; //重新挂上read事件，废物里用，不必再申请
     c->write = wev; //重新挂上write事件
-    c->fd = s;  //设置fd
+    c->fd = s;  //设置socket的fd
     c->log = log;
 
     instance = rev->instance;
@@ -1147,8 +1148,8 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     ngx_memzero(rev, sizeof(ngx_event_t)); //清理
     ngx_memzero(wev, sizeof(ngx_event_t));
 
-    rev->instance = !instance; //这是新获取的connection，取反
-    wev->instance = !instance;
+    rev->instance = !instance; //每次再次分配连接内存都要取反，避免旧的连接上的事件尚在处理，造成冲突
+    wev->instance = !instance; //这样一旦旧事件发现instance不对就放弃处理了
 
     rev->index = NGX_INVALID_INDEX;
     wev->index = NGX_INVALID_INDEX;
@@ -1187,10 +1188,12 @@ ngx_close_connection(ngx_connection_t *c)
         return;
     }
 
+	//连接的读事件从定时器删除
     if (c->read->timer_set) {
         ngx_del_timer(c->read);
     }
 
+	//连接的写事件从定时器删除
     if (c->write->timer_set) {
         ngx_del_timer(c->write);
     }
@@ -1221,6 +1224,7 @@ ngx_close_connection(ngx_connection_t *c)
     c->read->closed = 1;
     c->write->closed = 1;
 
+	// 将连接放回空闲连接池
     ngx_reusable_connection(c, 0);
 
     log_error = c->log_error;
@@ -1301,20 +1305,22 @@ ngx_drain_connections(ngx_cycle_t *cycle)
     ngx_queue_t       *q;
     ngx_connection_t  *c;
 
+	//最大32 最小1
     n = ngx_max(ngx_min(32, cycle->reusable_connections_n / 8), 1);
 
     for (i = 0; i < n; i++) {
-        if (ngx_queue_empty(&cycle->reusable_connections_queue)) {
+        if (ngx_queue_empty(&cycle->reusable_connections_queue)) { //空队列
             break;
         }
 
-        q = ngx_queue_last(&cycle->reusable_connections_queue);
-        c = ngx_queue_data(q, ngx_connection_t, queue);
+        q = ngx_queue_last(&cycle->reusable_connections_queue); //最后一个节点
+        c = ngx_queue_data(q, ngx_connection_t, queue); //通过ngx_connect_t的元素queue找到ngx_connect_t
 
         ngx_log_debug0(NGX_LOG_DEBUG_CORE, c->log, 0,
                        "reusing connection");
 
         c->close = 1;
+		//据说会触发关闭连接
         c->read->handler(c->read); //比如， ngx_http_keepalive_handler，从reusable_connections_queue摘下挂在 free_connections 上
     }
 }

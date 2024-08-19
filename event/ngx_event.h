@@ -57,7 +57,7 @@ struct ngx_event_s {
     unsigned         error:1;
 
     unsigned         timedout:1;
-    unsigned         timer_set:1;
+    unsigned         timer_set:1; //正在被时钟处理
 
     unsigned         delayed:1;
 
