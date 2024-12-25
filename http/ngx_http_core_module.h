@@ -308,8 +308,8 @@ struct ngx_http_core_loc_conf_s {
     unsigned      lmt_excpt:1;
     unsigned      named:1;
 
-    unsigned      exact_match:1;
-    unsigned      noregex:1;
+    unsigned      exact_match:1; //精确匹配
+    unsigned      noregex:1;  //不使用正则表达式
 
     unsigned      auto_redirect:1;
 #if (NGX_HTTP_GZIP)

@@ -2928,7 +2928,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     return rv;
 }
 
-
+// location命令
 static char *
 ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -2947,15 +2947,17 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
-    pctx = cf->ctx;
-    ctx->main_conf = pctx->main_conf;
-    ctx->srv_conf = pctx->srv_conf;
+    pctx = cf->ctx; //http ctx
+    ctx->main_conf = pctx->main_conf; //从http ctx继承过来
+    ctx->srv_conf = pctx->srv_conf; //从http ctx继承过来
 
+    // 要解析location指令，他是个命令块，需要创建这个location自己的conf上下文
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
     }
 
+    //调用模块的create_loc_conf函数，每个locaiton都有每个模块的loc ctx存储
     for (i = 0; cf->cycle->modules[i]; i++) {
         if (cf->cycle->modules[i]->type != NGX_HTTP_MODULE) {
             continue;
@@ -2972,34 +2974,34 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
-    clcf = ctx->loc_conf[ngx_http_core_module.ctx_index];
-    clcf->loc_conf = ctx->loc_conf;
+    clcf = ctx->loc_conf[ngx_http_core_module.ctx_index]; //当前locaiton自己的conf上下文
+    clcf->loc_conf = ctx->loc_conf; //http模块的location conf上下文
 
     value = cf->args->elts;
 
     if (cf->args->nelts == 3) {
 
         len = value[1].len;
-        mod = value[1].data;
-        name = &value[2];
+        mod = value[1].data; //location 匹配模式
+        name = &value[2]; //location name
 
-        if (len == 1 && mod[0] == '=') {
+        if (len == 1 && mod[0] == '=') { //只有一个=的情况，表示exact match
 
             clcf->name = *name;
             clcf->exact_match = 1;
 
-        } else if (len == 2 && mod[0] == '^' && mod[1] == '~') {
+        } else if (len == 2 && mod[0] == '^' && mod[1] == '~') { //不使用正则
 
             clcf->name = *name;
             clcf->noregex = 1;
 
-        } else if (len == 1 && mod[0] == '~') {
+        } else if (len == 1 && mod[0] == '~') { //使用正则
 
             if (ngx_http_core_regex_location(cf, clcf, name, 0) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
 
-        } else if (len == 2 && mod[0] == '~' && mod[1] == '*') {
+        } else if (len == 2 && mod[0] == '~' && mod[1] == '*') { //使用正则，且不区分大小写
 
             if (ngx_http_core_regex_location(cf, clcf, name, 1) != NGX_OK) {
                 return NGX_CONF_ERROR;
@@ -3011,20 +3013,20 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
             return NGX_CONF_ERROR;
         }
 
-    } else {
+    } else { // 只有一个参数的情况，可能只有location name，也可能有location name和匹配模式连在一起了 如：=/test
 
         name = &value[1];
 
         if (name->data[0] == '=') {
 
             clcf->name.len = name->len - 1;
-            clcf->name.data = name->data + 1;
+            clcf->name.data = name->data + 1; //找到真正的loc name
             clcf->exact_match = 1;
 
         } else if (name->data[0] == '^' && name->data[1] == '~') {
 
             clcf->name.len = name->len - 2;
-            clcf->name.data = name->data + 2;
+            clcf->name.data = name->data + 2; //找到真正的loc name
             clcf->noregex = 1;
 
         } else if (name->data[0] == '~') {
@@ -3032,7 +3034,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
             name->len--;
             name->data++;
 
-            if (name->data[0] == '*') {
+            if (name->data[0] == '*') { // ~*, 不区分大小写的正则
 
                 name->len--;
                 name->data++;
@@ -3041,17 +3043,21 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
                     return NGX_CONF_ERROR;
                 }
 
-            } else {
+            } else { // ~，区分大小写的正则
                 if (ngx_http_core_regex_location(cf, clcf, name, 0) != NGX_OK) {
                     return NGX_CONF_ERROR;
                 }
             }
 
-        } else {
+        } else { //没有匹配模式
 
             clcf->name = *name;
 
-            if (name->data[0] == '@') {
+            if (name->data[0] == '@') { // named locaiton
+                /*
+                The “@” prefix defines a named location. Such a location is not used for a regular request processing,
+                but instead used for request redirection. They cannot be nested, and cannot contain nested locations
+                */
                 clcf->named = 1;
             }
         }

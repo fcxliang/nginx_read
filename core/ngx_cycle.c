@@ -228,7 +228,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
 
         module = cycle->modules[i]->ctx;
-
+        // 目前的core module有log/regex/thread_pool/event/event_openssl/http/mail/stream/google_perftools/nginxcore
         if (module->create_conf) { //返回的是： ngx_core_conf_t ccf 解析后的模块相关的配置结构体
             rv = module->create_conf(cycle); //<<--------------调用module的create_conf 例如       ngx_core_module_ctx 的 ngx_core_module_create_conf
             if (rv == NULL) {
@@ -630,7 +630,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     pool->log = cycle->log;
 
-    if (ngx_init_modules(cycle) != NGX_OK) {  //调用module的init_module， ngx_modules，很多都没有这个方法
+    if (ngx_init_modules(cycle) != NGX_OK) {  //调用所有module的init_module， ngx_modules，很多都没有这个方法
         /* fatal */
         exit(1);
     }

@@ -123,7 +123,7 @@ struct ngx_conf_s {
     ngx_conf_file_t      *conf_file;
     ngx_log_t            *log;
 
-    void                 *ctx; //存放解析后的配置指针的数组，使用每个模块的ctx_idx来索引，http为ngx_http_conf_ctx_t
+    void                 *ctx; //存放解析后的配置指针的数组，使用每个模块的ctx_idx来索引，http为ngx_http_conf_ctx_t，随着不同的解析深度而变化
     ngx_uint_t            module_type;
     ngx_uint_t            cmd_type;
 

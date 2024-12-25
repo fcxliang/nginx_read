@@ -259,7 +259,7 @@ struct ngx_module_s {
 
 typedef struct {
     ngx_str_t             name;
-    void               *(*create_conf)(ngx_cycle_t *cycle);
+    void               *(*create_conf)(ngx_cycle_t *cycle); //创建配置状态的空间，保存配置
     char               *(*init_conf)(ngx_cycle_t *cycle, void *conf);
 } ngx_core_module_t;
 
