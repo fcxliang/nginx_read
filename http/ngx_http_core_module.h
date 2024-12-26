@@ -306,7 +306,7 @@ struct ngx_http_core_loc_conf_s {
 
     unsigned      noname:1;   /* "if () {}" block or limit_except */
     unsigned      lmt_excpt:1;
-    unsigned      named:1;
+    unsigned      named:1; // @
 
     unsigned      exact_match:1; //精确匹配
     unsigned      noregex:1;  //不使用正则表达式
@@ -443,12 +443,12 @@ struct ngx_http_core_loc_conf_s {
 
 
 typedef struct {
-    ngx_queue_t                      queue;
-    ngx_http_core_loc_conf_t        *exact;
-    ngx_http_core_loc_conf_t        *inclusive;
-    ngx_str_t                       *name;
-    u_char                          *file_name;
-    ngx_uint_t                       line;
+    ngx_queue_t                      queue;     //用于挂接到locations队列
+    ngx_http_core_loc_conf_t        *exact;     //精确匹配 正则匹配
+    ngx_http_core_loc_conf_t        *inclusive; //前缀匹配
+    ngx_str_t                       *name;      //location name
+    u_char                          *file_name; //配置文件名 调试用
+    ngx_uint_t                       line;      //配置文件行号 调试用
     ngx_queue_t                      list;
 } ngx_http_location_queue_t;
 

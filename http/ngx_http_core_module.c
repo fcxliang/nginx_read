@@ -2947,7 +2947,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
-    pctx = cf->ctx; //http ctx
+    pctx = cf->ctx; //保存上一级的也就是http ctx
     ctx->main_conf = pctx->main_conf; //从http ctx继承过来
     ctx->srv_conf = pctx->srv_conf; //从http ctx继承过来
 
@@ -2974,8 +2974,8 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
-    clcf = ctx->loc_conf[ngx_http_core_module.ctx_index]; //当前locaiton自己的conf上下文
-    clcf->loc_conf = ctx->loc_conf; //http模块的location conf上下文
+    clcf = ctx->loc_conf[ngx_http_core_module.ctx_index]; //当前location的http模块conf
+    clcf->loc_conf = ctx->loc_conf; //当前location的所有模块的loc conf
 
     value = cf->args->elts;
 
@@ -3063,9 +3063,9 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
-    pclcf = pctx->loc_conf[ngx_http_core_module.ctx_index];
+    pclcf = pctx->loc_conf[ngx_http_core_module.ctx_index]; // http大块或者上一级location的http模块conf
 
-    if (cf->cmd_type == NGX_HTTP_LOC_CONF) {
+    if (cf->cmd_type == NGX_HTTP_LOC_CONF) { //上一级也是location，发生了location嵌套
 
         /* nested location */
 
@@ -3073,7 +3073,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         clcf->prev_location = pclcf;
 #endif
 
-        if (pclcf->exact_match) {
+        if (pclcf->exact_match) { //上一级也是location，且是exact match，精确匹配的location不允许嵌套下一级的location
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "location \"%V\" cannot be inside "
                                "the exact location \"%V\"",
@@ -3081,7 +3081,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
             return NGX_CONF_ERROR;
         }
 
-        if (pclcf->named) {
+        if (pclcf->named) { //上一级是@named location，那么也不允许嵌套下一级的location
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "location \"%V\" cannot be inside "
                                "the named location \"%V\"",
@@ -3089,7 +3089,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
             return NGX_CONF_ERROR;
         }
 
-        if (clcf->named) {
+        if (clcf->named) { //本级location是@named也不对，@named location只能出现在server level
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "named location \"%V\" can be "
                                "on the server level only",
@@ -3097,33 +3097,35 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
             return NGX_CONF_ERROR;
         }
 
-        len = pclcf->name.len;
+        len = pclcf->name.len; //上次location的长度
 
 #if (NGX_PCRE)
         if (clcf->regex == NULL
-            && ngx_filename_cmp(clcf->name.data, pclcf->name.data, len) != 0)
+            && ngx_filename_cmp(clcf->name.data, pclcf->name.data, len) != 0) //如果当前location的name不是上一级的子串，那么就是错误的
 #else
         if (ngx_filename_cmp(clcf->name.data, pclcf->name.data, len) != 0)
 #endif
         {
+            // 例如上一级是/abc/那么本级可以是/abc/def，如果是/aaa/def那肯定就是错误的
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "location \"%V\" is outside location \"%V\"",
                                &clcf->name, &pclcf->name);
             return NGX_CONF_ERROR;
         }
-    }
+    } // location 嵌套结束
 
+    // 把当前的location添加到上一级的location队列里
     if (ngx_http_add_location(cf, &pclcf->locations, clcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
 
     save = *cf;
-    cf->ctx = ctx;
+    cf->ctx = ctx; //换上当前location的ctx
     cf->cmd_type = NGX_HTTP_LOC_CONF;
 
-    rv = ngx_conf_parse(cf, NULL);
+    rv = ngx_conf_parse(cf, NULL); //继续解析当前location域下的指令
 
-    *cf = save;
+    *cf = save; //恢复环境
 
     return rv;
 }

@@ -240,7 +240,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
     cf->module_type = NGX_HTTP_MODULE;
     cf->cmd_type = NGX_HTTP_MAIN_CONF;
 	//读取配置命令，找到对应的模块，解析
-    rv = ngx_conf_parse(cf, NULL);
+    rv = ngx_conf_parse(cf, NULL); // 比如可以从location指令看起
 
     if (rv != NGX_CONF_OK) {
         goto failed;
@@ -281,10 +281,11 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)  //解析http{} �
 
     /* create location trees */
 
-    for (s = 0; s < cmcf->servers.nelts; s++) {
+    for (s = 0; s < cmcf->servers.nelts; s++) { // 遍历当前的所有server
 
-        clcf = cscfp[s]->ctx->loc_conf[ngx_http_core_module.ctx_index];
+        clcf = cscfp[s]->ctx->loc_conf[ngx_http_core_module.ctx_index]; // 这个server的loc_conf
 
+        //                              当前srv    当前server的loc_conf
         if (ngx_http_init_locations(cf, cscfp[s], clcf) != NGX_OK) {
             return NGX_CONF_ERROR;
         }
@@ -687,7 +688,7 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_queue_t                 *regex;
 #endif
 
-    locations = pclcf->locations;
+    locations = pclcf->locations; //取出srv下的所有location
 
     if (locations == NULL) {
         return NGX_OK;
@@ -856,7 +857,7 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
 
     if (*locations == NULL) {
         *locations = ngx_palloc(cf->temp_pool,
-                                sizeof(ngx_http_location_queue_t));
+                                sizeof(ngx_http_location_queue_t)); //在temp_pool中分配内存，说明只是临时的，最终location不在这里
         if (*locations == NULL) {
             return NGX_ERROR;
         }
@@ -887,9 +888,9 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
     lq->file_name = cf->conf_file->file.name.data;
     lq->line = cf->conf_file->line;
 
-    ngx_queue_init(&lq->list);
+    ngx_queue_init(&lq->list); //空队列
 
-    ngx_queue_insert_tail(*locations, &lq->queue);
+    ngx_queue_insert_tail(*locations, &lq->queue); // 插入到locations队列链表的最前面
 
     return NGX_OK;
 }
@@ -905,25 +906,33 @@ ngx_http_cmp_locations(const ngx_queue_t *one, const ngx_queue_t *two)
     lq1 = (ngx_http_location_queue_t *) one;
     lq2 = (ngx_http_location_queue_t *) two;
 
-    first = lq1->exact ? lq1->exact : lq1->inclusive;
+    first = lq1->exact ? lq1->exact : lq1->inclusive; //非精确则前缀
     second = lq2->exact ? lq2->exact : lq2->inclusive;
 
-    if (first->noname && !second->noname) {
+    /*
+        无名location其实就是默认location
+        server {
+            listen 80;
+            root /var/html/index.html;
+        }
+        系统默认会生成 location / {}
+    */
+    if (first->noname && !second->noname) { //无名location优先级最低
         /* shift no named locations to the end */
         return 1;
     }
 
-    if (!first->noname && second->noname) {
+    if (!first->noname && second->noname) { //无名location优先级最低
         /* shift no named locations to the end */
         return -1;
     }
 
-    if (first->noname || second->noname) {
+    if (first->noname || second->noname) { //两个都是无名location，那就不要动位置了
         /* do not sort no named locations */
         return 0;
     }
 
-    if (first->named && !second->named) {
+    if (first->named && !second->named) { //其次是 location @，优先级次低
         /* shift named locations to the end */
         return 1;
     }
@@ -933,13 +942,13 @@ ngx_http_cmp_locations(const ngx_queue_t *one, const ngx_queue_t *two)
         return -1;
     }
 
-    if (first->named && second->named) {
+    if (first->named && second->named) { //两个@的话，按字母顺排，小的在前
         return ngx_strcmp(first->name.data, second->name.data);
     }
 
 #if (NGX_PCRE)
 
-    if (first->regex && !second->regex) {
+    if (first->regex && !second->regex) { // 再次正则，倒数第三
         /* shift the regex matches to the end */
         return 1;
     }
@@ -949,19 +958,21 @@ ngx_http_cmp_locations(const ngx_queue_t *one, const ngx_queue_t *two)
         return -1;
     }
 
-    if (first->regex || second->regex) {
+    if (first->regex || second->regex) { // 两个都是正则则不要改变顺序
         /* do not sort the regex matches */
         return 0;
     }
 
 #endif
 
+    // 第一是 越短的优先级越高  第二是 字母序小的优先级越高
     rc = ngx_filename_cmp(first->name.data, second->name.data,
                           ngx_min(first->name.len, second->name.len) + 1);
 
+    // 如果两个字符串相同，且一个是精确匹配，另一个不是，那么精确匹配优先级最高
     if (rc == 0 && !first->exact_match && second->exact_match) {
         /* an exact match must be before the same inclusive one */
-        return 1;
+        return 1; //精确匹配换位的情况返回的是rc，为0，所以此处只处理前非精后精确即可
     }
 
     return rc;

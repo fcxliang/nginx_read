@@ -890,23 +890,27 @@ ngx_filename_cmp(u_char *s1, u_char *s2, size_t n)
 
         if (c1 == c2) {
 
-            if (c1) {
+            if (c1) { // 只要前面都相同且c1没结束，继续比较
                 n--;
                 continue;
             }
 
+            //说明完全相同，返回0
             return 0;
         }
 
+        //到此处说明有不相同的字符
         /* we need '/' to be the lowest character */
 
-        if (c1 == 0 || c2 == 0) {
+        if (c1 == 0 || c2 == 0) { // s1 s2不等，其中一个已经到了末尾，返回差值，s1短为负值否则为正值
             return c1 - c2;
         }
 
+        //遇到/的时候都变成0
         c1 = (c1 == '/') ? 0 : c1;
         c2 = (c2 == '/') ? 0 : c2;
 
+        // 返回差值
         return c1 - c2;
     }
 
