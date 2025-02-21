@@ -873,7 +873,11 @@ ngx_dns_strcmp(u_char *s1, u_char *s2)
     }
 }
 
-
+// 路径比较
+// s1 s2完全相等，返回0
+// s1 s2第一个不等的字符，s1 < s2 返回负值，s1 > s2 返回正值
+// s1 s2 n以内 前面都相同，谁先结束谁小
+// s1 s2 n以内 前面都相同，谁先遇到/谁小
 ngx_int_t
 ngx_filename_cmp(u_char *s1, u_char *s2, size_t n)
 {

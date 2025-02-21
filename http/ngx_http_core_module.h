@@ -323,7 +323,7 @@ struct ngx_http_core_loc_conf_s {
 #endif
 
     /* pointer to the modules' loc_conf */
-    void        **loc_conf;
+    void        **loc_conf; //指向当前location地址的loc_conf，所有模块的loc_conf都是放在一起的
 
     uint32_t      limit_except;
     void        **limit_except_loc_conf;

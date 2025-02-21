@@ -870,6 +870,7 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
         return NGX_ERROR;
     }
 
+    // 精确匹配，@，if还有正则都作为精确匹配
     if (clcf->exact_match
 #if (NGX_PCRE)
         || clcf->regex
@@ -880,6 +881,7 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
         lq->inclusive = NULL;
 
     } else {
+        // 最长匹配作为前缀匹配
         lq->exact = NULL;
         lq->inclusive = clcf;
     }
@@ -895,7 +897,28 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
     return NGX_OK;
 }
 
+//优先级 default < @ < regex < prefix < exact
+//对于同是@，如果为prefix关系，谁短谁优先级高。不是prefix关系，谁字符序小谁优先级高
+//对于同是regex，保留原序
+//对于prefix，谁小谁在前
+    /*
+        // s1 s2 n以内完全相等，返回0
+        // s1 s2 n以内有不同字符，字符序小则小
+        // s1 s2 n以内 前面都相同，谁先结束谁小
+        // s1 s2 n以内 前面都相同，谁先遇到/谁小
 
+        /abc/def
+        /abcd
+        /abcd/def
+
+        /abc/def>/abcd=/abcd/def
+
+        /abc/def
+        /abcd
+        =/abcd/def
+        /abc/def>/abcd/def>/abcd
+    */
+//如果prefix相同，精确匹配优先
 static ngx_int_t
 ngx_http_cmp_locations(const ngx_queue_t *one, const ngx_queue_t *two)
 {
@@ -1028,7 +1051,7 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
     ngx_queue_t                *x, tail;
     ngx_http_location_queue_t  *lq, *lx;
 
-    if (q == ngx_queue_last(locations)) {
+    if (q == ngx_queue_last(locations)) { //q是最后一个了，那么直接返回
         return;
     }
 
@@ -1046,6 +1069,7 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
          x != ngx_queue_sentinel(locations);
          x = ngx_queue_next(x))
     {
+        // 找到与lq不一样的域名，或者不以lq开头的域名
         lx = (ngx_http_location_queue_t *) x;
 
         if (len > lx->name->len

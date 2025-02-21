@@ -1,18 +1,17 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "MacOS",
             "includePath": [
-                "D:\\cproj\\nginx_learning\\src",
-                "${workspaceFolder}\\**",
-                "/usr/include"
-            ],
+                "${workspaceFolder}/**",
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/**"
+                ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "d:\\msys64\\mingw64\\bin\\gcc.exe",
+            "compilerPath": "/usr/bin/gcc",
             "compilerArgs": [
                 "-fdiagnostics-color=always",
                 "-g",

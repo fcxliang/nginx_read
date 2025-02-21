@@ -23,7 +23,15 @@
         "ngx_core.h": "c",
         "nginx.h": "c",
         "ngx_http.h": "c",
-        "ngx_auto_headers.h": "c"
+        "ngx_auto_headers.h": "c",
+        "string": "c",
+        "string_view": "c",
+        "vector": "c",
+        "variant": "c",
+        "__threading_support": "cpp",
+        "__availability": "c",
+        "ngx_stream.h": "c",
+        "ngx_keyval.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

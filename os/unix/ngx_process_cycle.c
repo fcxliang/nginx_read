@@ -724,6 +724,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data) // worker进程
     ngx_process = NGX_PROCESS_WORKER;
     ngx_worker = worker;  //进程序号
 
+    // 在此调用每个模块的init_process
     ngx_worker_process_init(cycle, worker); //设置监听，设置accept的handle，epoll_ctl
 
     ngx_setproctitle("worker process");
@@ -1009,7 +1010,7 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
      * The handler may be called when standard ngx_cycle->log allocated from
      * ngx_cycle->pool is already destroyed.
      */
-
+    // 保证释放了pool后，日志还能用
     ngx_exit_log = *ngx_log_get_file_log(ngx_cycle->log);
 
     ngx_exit_log_file.fd = ngx_exit_log.file->fd;

@@ -46,7 +46,8 @@ ngx_queue_middle(ngx_queue_t *queue)
 
 
 /* the stable insertion sort */
-
+// 对location进行排序
+//
 void
 ngx_queue_sort(ngx_queue_t *queue,
     ngx_int_t (*cmp)(const ngx_queue_t *, const ngx_queue_t *))
@@ -55,7 +56,7 @@ ngx_queue_sort(ngx_queue_t *queue,
 
     q = ngx_queue_head(queue);
 
-    if (q == ngx_queue_last(queue)) {
+    if (q == ngx_queue_last(queue)) { // 空的
         return;
     }
 
@@ -64,17 +65,19 @@ ngx_queue_sort(ngx_queue_t *queue,
         prev = ngx_queue_prev(q);
         next = ngx_queue_next(q);
 
-        ngx_queue_remove(q);
+        ngx_queue_remove(q); //把q从队列摘下
 
         do {
-            if (cmp(prev, q) <= 0) {
+            if (cmp(prev, q) <= 0) { // 本来就是升序的话 继续下一个
                 break;
             }
-
+            
+            // 一直往前找，直到找到比q小的元素
             prev = ngx_queue_prev(prev);
 
         } while (prev != ngx_queue_sentinel(queue));
 
+        // 把q插入到比q小的元素后面
         ngx_queue_insert_after(prev, q);
     }
 }

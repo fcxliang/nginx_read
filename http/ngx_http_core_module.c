@@ -2940,24 +2940,26 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     ngx_conf_t                 save;
     ngx_http_module_t         *module;
     ngx_http_conf_ctx_t       *ctx, *pctx;
-    ngx_http_core_loc_conf_t  *clcf, *pclcf;
+    ngx_http_core_loc_conf_t  *clcf, *pclcf; //clcf == core
 
+    // ctx用于存放所有模块的conf
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t));
     if (ctx == NULL) {
         return NGX_CONF_ERROR;
     }
 
+    // 因为这是location指令块，main和srv直接继承上一级的ctx即可
     pctx = cf->ctx; //保存上一级的也就是http ctx
     ctx->main_conf = pctx->main_conf; //从http ctx继承过来
     ctx->srv_conf = pctx->srv_conf; //从http ctx继承过来
 
-    // 要解析location指令，他是个命令块，需要创建这个location自己的conf上下文
+    //loc_conf即当前location的所有模块的loc配置，需要申请私有的空间来存储
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
     }
 
-    //调用模块的create_loc_conf函数，每个locaiton都有每个模块的loc ctx存储
+    //调用模块的create_loc_conf函数，每个locaiton都有每个http模块的loc ctx存储
     for (i = 0; cf->cycle->modules[i]; i++) {
         if (cf->cycle->modules[i]->type != NGX_HTTP_MODULE) {
             continue;
@@ -2965,7 +2967,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
         module = cf->cycle->modules[i]->ctx;
 
-        if (module->create_loc_conf) {
+        if (module->create_loc_conf) { // 支持在location域下生效的代码
             ctx->loc_conf[cf->cycle->modules[i]->ctx_index] =
                                                    module->create_loc_conf(cf);
             if (ctx->loc_conf[cf->cycle->modules[i]->ctx_index] == NULL) {
@@ -2974,35 +2976,43 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
+    // 当前这个模块就是ngx_http_core_module, clcf就是当前模块的loc conf，上面刚刚创建起来
     clcf = ctx->loc_conf[ngx_http_core_module.ctx_index]; //当前location的http模块conf
     clcf->loc_conf = ctx->loc_conf; //当前location的所有模块的loc conf
 
+    // 下面开始解析location指令
     value = cf->args->elts;
 
+    // 有2个参数的情况
+    // location = /test  location ~* /test等
     if (cf->args->nelts == 3) {
 
+        // 第一个参数 匹配模式
         len = value[1].len;
         mod = value[1].data; //location 匹配模式
+
+        // 第二个参数 路径
         name = &value[2]; //location name
 
+        // 精确匹配
         if (len == 1 && mod[0] == '=') { //只有一个=的情况，表示exact match
 
             clcf->name = *name;
             clcf->exact_match = 1;
 
         } else if (len == 2 && mod[0] == '^' && mod[1] == '~') { //不使用正则
-
+            // 禁止正则表达式的最长匹配
             clcf->name = *name;
             clcf->noregex = 1;
 
         } else if (len == 1 && mod[0] == '~') { //使用正则
-
+            // 大小写敏感的正则表达式匹配
             if (ngx_http_core_regex_location(cf, clcf, name, 0) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
 
         } else if (len == 2 && mod[0] == '~' && mod[1] == '*') { //使用正则，且不区分大小写
-
+            // 大小写不敏感的正则表达式匹配
             if (ngx_http_core_regex_location(cf, clcf, name, 1) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
@@ -3013,18 +3023,21 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
             return NGX_CONF_ERROR;
         }
 
-    } else { // 只有一个参数的情况，可能只有location name，也可能有location name和匹配模式连在一起了 如：=/test
-
+    } else {
+        // 只有1个参数的情况
+        // 可能只有location name
+        // 也可能有location name和匹配模式连在一起了 如：=/test  ^~/test等
+        // name->len没有限制 如果 location = 没有后面的name，那么name->len=0
         name = &value[1];
 
         if (name->data[0] == '=') {
-
+            // 精确匹配
             clcf->name.len = name->len - 1;
             clcf->name.data = name->data + 1; //找到真正的loc name
             clcf->exact_match = 1;
 
         } else if (name->data[0] == '^' && name->data[1] == '~') {
-
+            // 禁用正则的最长匹配
             clcf->name.len = name->len - 2;
             clcf->name.data = name->data + 2; //找到真正的loc name
             clcf->noregex = 1;
@@ -3033,9 +3046,8 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
             name->len--;
             name->data++;
-
             if (name->data[0] == '*') { // ~*, 不区分大小写的正则
-
+                // ～* 大小写不敏感的正则匹配
                 name->len--;
                 name->data++;
 
@@ -3044,15 +3056,17 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
                 }
 
             } else { // ~，区分大小写的正则
+                // ~ 大小写敏感的正则匹配
                 if (ngx_http_core_regex_location(cf, clcf, name, 0) != NGX_OK) {
                     return NGX_CONF_ERROR;
                 }
             }
 
         } else { //没有匹配模式
-
+            // 最长匹配
             clcf->name = *name;
 
+            // 只有最长匹配才可以使用named location
             if (name->data[0] == '@') { // named locaiton
                 /*
                 The “@” prefix defines a named location. Such a location is not used for a regular request processing,
@@ -3063,7 +3077,9 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
-    pclcf = pctx->loc_conf[ngx_http_core_module.ctx_index]; // http大块或者上一级location的http模块conf
+    // 上一层的context
+    // 可能是server level，也可能是location level（嵌套）
+    pclcf = pctx->loc_conf[ngx_http_core_module.ctx_index];
 
     if (cf->cmd_type == NGX_HTTP_LOC_CONF) { //上一级也是location，发生了location嵌套
 
@@ -3072,7 +3088,10 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 #if 0
         clcf->prev_location = pclcf;
 #endif
-
+        // 以下可以看到
+        // 1. 精确匹配内不可以嵌套location
+        // 2. named location不允许嵌套任何locaion
+        // 3. 任何location都不允许嵌套named location
         if (pclcf->exact_match) { //上一级也是location，且是exact match，精确匹配的location不允许嵌套下一级的location
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "location \"%V\" cannot be inside "
@@ -3102,6 +3121,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 #if (NGX_PCRE)
         if (clcf->regex == NULL
             && ngx_filename_cmp(clcf->name.data, pclcf->name.data, len) != 0) //如果当前location的name不是上一级的子串，那么就是错误的
+            // /lxl/  父   /lxl/test 子
 #else
         if (ngx_filename_cmp(clcf->name.data, pclcf->name.data, len) != 0)
 #endif
@@ -3115,6 +3135,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     } // location 嵌套结束
 
     // 把当前的location添加到上一级的location队列里
+    //                       配置解析 上一级的location队列 当前location结构
     if (ngx_http_add_location(cf, &pclcf->locations, clcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -4475,7 +4496,7 @@ ngx_http_core_limit_except(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (!(pclcf->limit_except & NGX_HTTP_GET)) {
         pclcf->limit_except &= (uint32_t) ~NGX_HTTP_HEAD;
     }
-
+    // limit except 也是一个block
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t));
     if (ctx == NULL) {
         return NGX_CONF_ERROR;

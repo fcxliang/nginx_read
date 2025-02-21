@@ -96,6 +96,12 @@ ngx_event_expire_timers(void)
 }
 
 
+/**
+ * Check if there are any non-cancelable timers left.
+ *
+ * @return NGX_OK if all timers are cancelable, NGX_AGAIN if there are
+ *         non-cancelable timers left.
+ */
 ngx_int_t
 ngx_event_no_timers_left(void)
 {
